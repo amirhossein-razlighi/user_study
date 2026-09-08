@@ -1,0 +1,84 @@
+/* Ablation-study-specific styles. Loaded *after* the shared
+   ../../assets/css/style.css — reuses its tokens (--accent, --success,
+   --warn, etc.) and components (.card, .option-card, .choice-btn, .video)
+   rather than redefining them. Only the bits unique to a 3-way
+   comparison (Likert scales, a single-column 3-video stack, a 4-way
+   choice row) live here. */
+
+/* Three video cards always stack in one column (unlike the 2-video
+   .options-grid, which goes 2-up on desktop) — each card is taller here
+   thanks to the two Likert widgets, so a 3-up grid would feel cramped. */
+.options-grid-3 {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.options-grid-3 .video {
+  max-width: none;
+}
+
+/* ---------- Likert scale ---------- */
+
+.likert {
+  width: 100%;
+  text-align: left;
+}
+
+.likert + .likert {
+  margin-top: 14px;
+}
+
+.likert-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.likert-scale {
+  display: flex;
+  gap: 6px;
+}
+
+.likert-btn {
+  flex: 1;
+  aspect-ratio: 1;
+  appearance: none;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.likert-btn.selected {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.likert-endpoints {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ---------- 4-way "best overall" choice (A / B / C / tie) ---------- */
+
+.choice-row-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (min-width: 480px) {
+  .choice-row-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

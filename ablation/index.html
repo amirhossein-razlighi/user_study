@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Video Editing Modality Ablation Study</title>
+  <meta name="description" content="A short study comparing three video-editing guidance setups." />
+  <link rel="stylesheet" href="../assets/css/style.css?v=14" />
+  <link rel="stylesheet" href="assets/css/ablation.css?v=1" />
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ============ SCREEN: WELCOME ============ -->
+    <section class="screen" id="screen-welcome" data-screen="welcome">
+      <div class="container narrow">
+        <header class="hero">
+          <p class="eyebrow">Research user study</p>
+          <h1>Comparing three video-editing setups</h1>
+          <p class="lede">
+            You'll watch a short input video together with a one-sentence edit
+            request, then rate three edited versions and tell us which one
+            follows the request best.
+          </p>
+        </header>
+
+        <div class="card">
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li>
+              <span class="step-num">1</span>
+              <span>Read the edit request and watch the original input video.</span>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <span>Watch <strong>Option A</strong>, <strong>Option B</strong>, and <strong>Option C</strong> &mdash; three edited versions, shown in random order.</span>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <div class="step-body">
+                <span>For each option, rate two things on a scale of 1&ndash;5:</span>
+                <ul class="criteria-list">
+                  <li class="criterion criterion-happen">
+                    <span class="criterion-icon" aria-hidden="true">&check;</span>
+                    <span><strong>Edit success.</strong> How well does it perform the requested edit &mdash; from not at all (1) to completely (5)?</span>
+                  </li>
+                  <li class="criterion criterion-natural">
+                    <span class="criterion-icon" aria-hidden="true">&#10024;</span>
+                    <span><strong>Motion naturalness.</strong> How natural does the motion look &mdash; from very unnatural (1) to very natural (5)?</span>
+                  </li>
+                </ul>
+              </div>
+            </li>
+            <li>
+              <span class="step-num">4</span>
+              <div class="step-body">
+                <span>Pick which of the three is best overall.</span>
+                <p class="tie-warning">
+                  <strong>Please avoid "About the same"</strong> unless the three videos are truly
+                  indistinguishable &mdash; use it sparingly.
+                </p>
+              </div>
+            </li>
+          </ol>
+          <p class="audio-note">
+            <strong>About the audio:</strong> this study is only about <strong>motion editing</strong>.
+            Sound is included purely for reference/context &mdash; please don't judge or score a
+            video based on its audio or sound quality.
+          </p>
+          <p class="hint">There are <strong id="scenario-count">7</strong> scenarios. It takes about 10&ndash;15 minutes.</p>
+        </div>
+
+        <div class="card">
+          <h2>Your privacy</h2>
+          <p class="hint">
+            Your responses are completely anonymous &mdash; we do not collect
+            your name, email, or any other personal information. We only
+            record your choices on the video samples shown, which will be
+            combined with everyone else's responses into aggregate
+            statistics.
+          </p>
+        </div>
+
+        <!-- DEBUG-ONLY: delete this whole block before release -->
+        <label class="checkbox-row debug-toggle-row">
+          <input type="checkbox" id="debug-toggle" />
+          <span class="checkbox-box" aria-hidden="true"></span>
+          <span>Debug view (reveals audio/text/both per scenario) &mdash; internal use only</span>
+        </label>
+        <!-- END DEBUG-ONLY -->
+
+        <button class="btn btn-ghost" id="btn-resume" hidden>Resume where I left off</button>
+        <button class="btn btn-primary btn-large" id="btn-start">I consent and begin</button>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: TRIAL ============ -->
+    <section class="screen" id="screen-trial" data-screen="trial" hidden>
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+
+      <div class="container">
+        <div class="trial-topbar">
+          <span class="progress-label" id="progress-label">Scenario 1 of 7</span>
+          <button class="link-btn" id="btn-restart">Start over</button>
+        </div>
+
+        <div class="card prompt-card">
+          <p class="prompt-kicker">Edit requested</p>
+          <p class="prompt-text" id="edit-prompt">&hellip;</p>
+        </div>
+
+        <div class="input-video-wrap">
+          <p class="section-label">Original input video</p>
+          <video class="video video-input" id="video-input" controls playsinline preload="metadata"></video>
+        </div>
+
+        <p class="section-label compare-label">Rate the three edited versions</p>
+
+        <div class="options-grid-3">
+          <div class="option-card" id="option-card-a">
+            <p class="option-title">Option A <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-a" hidden></span><!-- END DEBUG-ONLY --></p>
+            <video class="video" id="video-a" controls playsinline preload="metadata"></video>
+            <div class="likert" data-video="a" data-question="success">
+              <p class="likert-label">Edit success</p>
+              <div class="likert-scale" role="radiogroup" aria-label="Edit success, Option A">
+                <button class="likert-btn" type="button" data-value="1">1</button>
+                <button class="likert-btn" type="button" data-value="2">2</button>
+                <button class="likert-btn" type="button" data-value="3">3</button>
+                <button class="likert-btn" type="button" data-value="4">4</button>
+                <button class="likert-btn" type="button" data-value="5">5</button>
+              </div>
+              <div class="likert-endpoints"><span>Not at all</span><span>Completely</span></div>
+            </div>
+            <div class="likert" data-video="a" data-question="naturalness">
+              <p class="likert-label">Motion naturalness</p>
+              <div class="likert-scale" role="radiogroup" aria-label="Motion naturalness, Option A">
+                <button class="likert-btn" type="button" data-value="1">1</button>
+                <button class="likert-btn" type="button" data-value="2">2</button>
+                <button class="likert-btn" type="button" data-value="3">3</button>
+                <button class="likert-btn" type="button" data-value="4">4</button>
+                <button class="likert-btn" type="button" data-value="5">5</button>
+              </div>
+              <div class="likert-endpoints"><span>Very unnatural</span><span>Very natural</span></div>
+            </div>
+          </div>
+
+          <div class="option-card" id="option-card-b">
+            <p class="option-title">Option B <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-b" hidden></span><!-- END DEBUG-ONLY --></p>
+            <video class="video" id="video-b" controls playsinline preload="metadata"></video>
+            <div class="likert" data-video="b" data-question="success">
+              <p class="likert-label">Edit success</p>
+              <div class="likert-scale" role="radiogroup" aria-label="Edit success, Option B">
+                <button class="likert-btn" type="button" data-value="1">1</button>
+                <button class="likert-btn" type="button" data-value="2">2</button>
+                <button class="likert-btn" type="button" data-value="3">3</button>
+                <button class="likert-btn" type="button" data-value="4">4</button>
+                <button class="likert-btn" type="button" data-value="5">5</button>
+              </div>
+              <div class="likert-endpoints"><span>Not at all</span><span>Completely</span></div>
+            </div>
+            <div class="likert" data-video="b" data-question="naturalness">
+              <p class="likert-label">Motion naturalness</p>
+              <div class="likert-scale" role="radiogroup" aria-label="Motion naturalness, Option B">
+                <button class="likert-btn" type="button" data-value="1">1</button>
+                <button class="likert-btn" type="button" data-value="2">2</button>
+                <button class="likert-btn" type="button" data-value="3">3</button>
+                <button class="likert-btn" type="button" data-value="4">4</button>
+                <button class="likert-btn" type="button" data-value="5">5</button>
+              </div>
+              <div class="likert-endpoints"><span>Very unnatural</span><span>Very natural</span></div>
+            </div>
+          </div>
+
+          <div class="option-card" id="option-card-c">
+            <p class="option-title">Option C <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-c" hidden></span><!-- END DEBUG-ONLY --></p>
+            <video class="video" id="video-c" controls playsinline preload="metadata"></video>
+            <div class="likert" data-video="c" data-question="success">
+              <p class="likert-label">Edit success</p>
+              <div class="likert-scale" role="radiogroup" aria-label="Edit success, Option C">
+                <button class="likert-btn" type="button" data-value="1">1</button>
+                <button class="likert-btn" type="button" data-value="2">2</button>
+                <button class="likert-btn" type="button" data-value="3">3</button>
+                <button class="likert-btn" type="button" data-value="4">4</button>
+                <button class="likert-btn" type="button" data-value="5">5</button>
+              </div>
+              <div class="likert-endpoints"><span>Not at all</span><span>Completely</span></div>
+            </div>
+            <div class="likert" data-video="c" data-question="naturalness">
+              <p class="likert-label">Motion naturalness</p>
+              <div class="likert-scale" role="radiogroup" aria-label="Motion naturalness, Option C">
+                <button class="likert-btn" type="button" data-value="1">1</button>
+                <button class="likert-btn" type="button" data-value="2">2</button>
+                <button class="likert-btn" type="button" data-value="3">3</button>
+                <button class="likert-btn" type="button" data-value="4">4</button>
+                <button class="likert-btn" type="button" data-value="5">5</button>
+              </div>
+              <div class="likert-endpoints"><span>Very unnatural</span><span>Very natural</span></div>
+            </div>
+          </div>
+        </div>
+
+        <fieldset class="choice-fieldset">
+          <legend>Which of the three videos is best overall?</legend>
+          <div class="choice-row-4" role="radiogroup">
+            <button class="choice-btn" data-choice="A" type="button">A</button>
+            <button class="choice-btn" data-choice="B" type="button">B</button>
+            <button class="choice-btn" data-choice="C" type="button">C</button>
+            <button class="choice-btn choice-btn-tie" data-choice="tie" type="button">About the same</button>
+          </div>
+        </fieldset>
+
+        <div class="nav-row">
+          <button class="btn btn-ghost" id="btn-back">Back</button>
+          <button class="btn btn-primary" id="btn-next" disabled>Next</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: DONE ============ -->
+    <section class="screen" id="screen-done" data-screen="done" hidden>
+      <div class="container narrow">
+        <header class="hero">
+          <p class="eyebrow">All done</p>
+          <h1>Thank you!</h1>
+          <p class="lede">Here's what happened when we tried to save your responses.</p>
+        </header>
+
+        <div class="card submit-status" id="submit-status" data-state="submitting">
+          <div class="submit-status-icon" aria-hidden="true">
+            <span class="spinner"></span>
+            <svg class="status-icon status-icon-check" viewBox="0 0 24 24" fill="none">
+              <path d="M4 12.5l5 5L20 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <svg class="status-icon status-icon-x" viewBox="0 0 24 24" fill="none">
+              <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <p class="submit-status-text" id="submit-status-text">Saving your responses&hellip;</p>
+          <div class="submit-actions" id="submit-actions" hidden>
+            <button class="btn btn-ghost" id="btn-retry-submit">Try again</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Keep a backup copy</h2>
+          <p class="hint" id="download-hint">
+            Optional &mdash; a .zip of your results, in case you'd like a copy for yourself.
+          </p>
+          <button class="btn btn-ghost btn-large" id="btn-download">Download results (.zip)</button>
+        </div>
+
+        <div class="card">
+          <button class="link-btn" id="btn-toggle-summary">Show a summary of my answers</button>
+          <div id="summary-wrap" hidden>
+            <table class="summary-table" id="summary-table"></table>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost" id="btn-restart-2">Start over</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="data/scenarios.js?v=1"></script>
+  <script src="assets/js/app.js?v=1"></script>
+</body>
+</html>

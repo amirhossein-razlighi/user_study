@@ -19,6 +19,10 @@ At the end, all 17 answers are submitted to Supabase in one request (see
 failed, with automatic + manual retry and a "download results as .zip"
 fallback if it still can't get through.
 
+A sibling study lives at [`ablation/`](ablation/README.md) — same theme
+and infrastructure, comparing three editing-guidance setups (audio-only /
+text-only / both) with Likert ratings instead of a pairwise A/B checkbox.
+
 ## Running locally
 
 No build step. Any static file server works, e.g.:
@@ -85,9 +89,10 @@ Responses are stored in the `gruvi-survey` Supabase project (project ref
 **`public.h3_main_experiment_survey_responses`**. That project already held
 data from unrelated prior studies (`survey_responses`,
 `ablation_modality_responses`) — this table is new and independent, so
-nothing else in the project was touched. A future ablation study should get
-its own `public.<study_name>_responses` table the same way, following this
-one as a template.
+nothing else in the project was touched. The [`ablation/`](ablation/README.md)
+sibling study followed this same pattern for its own
+`public.h3_ablation_survey_responses` table — the template to copy for any
+future study.
 
 **Shape:** one row per `(session_id, scenario)` — i.e. 17 rows per
 completed participant, "tidy"/long format, rather than one row per session
