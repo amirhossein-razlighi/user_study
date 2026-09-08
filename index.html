@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Video Editing User Study</title>
+  <meta name="description" content="A short study comparing two AI video-editing methods." />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- ============ SCREEN: WELCOME ============ -->
+    <section class="screen" id="screen-welcome" data-screen="welcome">
+      <div class="container narrow">
+        <header class="hero">
+          <p class="eyebrow">Research user study</p>
+          <h1>Comparing two video-editing methods</h1>
+          <p class="lede">
+            You'll watch a short input video together with a one-sentence edit
+            request, then compare two edited versions and tell us which one
+            follows the request best.
+          </p>
+        </header>
+
+        <div class="card">
+          <h2>How it works</h2>
+          <ol class="steps">
+            <li>
+              <span class="step-num">1</span>
+              <span>Read the edit request and watch the original input video.</span>
+            </li>
+            <li>
+              <span class="step-num">2</span>
+              <span>Watch <strong>Option A</strong> and <strong>Option B</strong> &mdash; two edited versions, shown in random order.</span>
+            </li>
+            <li>
+              <span class="step-num">3</span>
+              <span>For each option, tick the box if it actually performs the requested edit.</span>
+            </li>
+            <li>
+              <span class="step-num">4</span>
+              <span>Pick the option you think is better overall (or "about the same").</span>
+            </li>
+          </ol>
+          <p class="hint">There are <strong id="scenario-count">17</strong> scenarios. It takes about 8&ndash;12 minutes. Please use headphones or turn your sound on &mdash; audio matters.</p>
+        </div>
+
+        <div class="card">
+          <label class="field">
+            <span>Your name or participant ID <span class="optional">(optional)</span></span>
+            <input type="text" id="participant-id" placeholder="e.g. your initials or a Prolific/MTurk ID" autocomplete="off" />
+          </label>
+          <p class="hint small">This is only used to tell responses apart when results are exported. Leave blank to stay anonymous.</p>
+        </div>
+
+        <button class="btn btn-primary btn-large" id="btn-start">Begin study</button>
+        <button class="btn btn-ghost" id="btn-resume" hidden>Resume where I left off</button>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: TRIAL ============ -->
+    <section class="screen" id="screen-trial" data-screen="trial" hidden>
+      <div class="progress-bar" aria-hidden="true">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+
+      <div class="container">
+        <div class="trial-topbar">
+          <span class="progress-label" id="progress-label">Scenario 1 of 17</span>
+          <button class="link-btn" id="btn-restart">Start over</button>
+        </div>
+
+        <div class="card prompt-card">
+          <p class="prompt-kicker">Edit requested</p>
+          <p class="prompt-text" id="edit-prompt">&hellip;</p>
+        </div>
+
+        <div class="input-video-wrap">
+          <p class="section-label">Original input video</p>
+          <video class="video video-input" id="video-input" controls playsinline preload="metadata"></video>
+        </div>
+
+        <p class="section-label compare-label">Compare the two edited versions</p>
+
+        <div class="options-grid">
+          <div class="option-card" id="option-card-a">
+            <p class="option-title">Option A</p>
+            <video class="video" id="video-a" controls playsinline preload="metadata"></video>
+            <label class="checkbox-row">
+              <input type="checkbox" id="check-a" />
+              <span class="checkbox-box" aria-hidden="true"></span>
+              <span>The task was accomplished in this video</span>
+            </label>
+          </div>
+
+          <div class="option-card" id="option-card-b">
+            <p class="option-title">Option B</p>
+            <video class="video" id="video-b" controls playsinline preload="metadata"></video>
+            <label class="checkbox-row">
+              <input type="checkbox" id="check-b" />
+              <span class="checkbox-box" aria-hidden="true"></span>
+              <span>The task was accomplished in this video</span>
+            </label>
+          </div>
+        </div>
+
+        <fieldset class="choice-fieldset">
+          <legend>Which one better performs the requested edit, while keeping everything else the same?</legend>
+          <div class="choice-row" role="radiogroup">
+            <button class="choice-btn" data-choice="A" type="button">
+              <span class="choice-icon">&larr;</span> A is better
+            </button>
+            <button class="choice-btn choice-btn-tie" data-choice="tie" type="button">
+              About the same
+            </button>
+            <button class="choice-btn" data-choice="B" type="button">
+              B is better <span class="choice-icon">&rarr;</span>
+            </button>
+          </div>
+        </fieldset>
+
+        <div class="nav-row">
+          <button class="btn btn-ghost" id="btn-back">Back</button>
+          <button class="btn btn-primary" id="btn-next" disabled>Next</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCREEN: DONE ============ -->
+    <section class="screen" id="screen-done" data-screen="done" hidden>
+      <div class="container narrow">
+        <header class="hero">
+          <p class="eyebrow">All done</p>
+          <h1>Thank you!</h1>
+          <p class="lede">Your responses have been recorded on this device.</p>
+        </header>
+
+        <div class="card">
+          <h2>Save your results</h2>
+          <p class="hint">
+            This study doesn't have a server yet, so please download your
+            results file and send it back to the study organizer.
+          </p>
+          <button class="btn btn-primary btn-large" id="btn-download">Download results (.json)</button>
+        </div>
+
+        <div class="card">
+          <button class="link-btn" id="btn-toggle-summary">Show a summary of my answers</button>
+          <div id="summary-wrap" hidden>
+            <table class="summary-table" id="summary-table"></table>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost" id="btn-restart-2">Start over</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="data/scenarios.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
