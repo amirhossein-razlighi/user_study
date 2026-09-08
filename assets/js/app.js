@@ -1,16 +1,26 @@
-/* Video editing A/B user study — front end only (no backend yet).
+/* Video editing A/B user study.
  *
  * Progress and answers are kept in localStorage so a participant can close
- * the tab and resume later. At the end, results are exported as a single
- * JSON file the participant downloads and sends back to the study
- * organizer. `buildExportPayload()` is the single place that shapes that
- * payload — wire a real submission (fetch/POST, Supabase, etc.) around its
- * result when the backend is ready.
+ * the tab and resume later. On the done screen, the full set of answers is
+ * submitted to Supabase in a single request (see submitResponses()); a
+ * status indicator shows the in-flight/success/failure state, with
+ * automatic retries and a manual "Try again". `buildExportPayload()` /
+ * the "Download results" button remain as a manual backup path if the
+ * automatic submission can't get through.
  */
 (function () {
   "use strict";
 
   const STORAGE_KEY = "video_study_v1";
+
+  // Anon/publishable key: safe to ship in client code by design — RLS on
+  // this table only allows the anon role to INSERT, never read/update/
+  // delete, so this key can't expose or tamper with anyone's data.
+  const SUPABASE_URL = "https://guamrqujwnfejkvsrcar.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd1YW1ycXVqd25mZWprdnNyY2FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc4MTMxMzIsImV4cCI6MjA5MzM4OTEzMn0.UukpujziUjhZA16Wcx1lF2Pzh8Yhasz0fGYWENuRYRs";
+  const SUPABASE_TABLE = "h3_main_experiment_survey_responses";
+  const MAX_SUBMIT_ATTEMPTS = 3;
 
   /* ---------------- state ---------------- */
 
@@ -35,11 +45,32 @@
       };
     });
     return {
+      sessionId: createSessionId(),
       startedAt: null,
       finishedAt: null,
+      submitted: false,
       currentIndex: 0,
       trials
     };
+  }
+
+  function createSessionId() {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") {
+      return window.crypto.randomUUID();
+    }
+    // Fallback UUID v4 for browsers without crypto.randomUUID (rare, but cheap to cover)
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+
+  // Patches in sessionId/submitted for a state saved before this feature
+  // existed, so old resumed/finished sessions still work.
+  function ensureSessionFields(s) {
+    if (!s.sessionId) s.sessionId = createSessionId();
+    if (typeof s.submitted !== "boolean") s.submitted = false;
   }
 
   function otherClip(clip) {
@@ -113,6 +144,12 @@
     btnBack: document.getElementById("btn-back"),
     btnNext: document.getElementById("btn-next"),
 
+    submitStatus: document.getElementById("submit-status"),
+    submitStatusText: document.getElementById("submit-status-text"),
+    submitActions: document.getElementById("submit-actions"),
+    btnRetrySubmit: document.getElementById("btn-retry-submit"),
+    downloadHint: document.getElementById("download-hint"),
+
     btnDownload: document.getElementById("btn-download"),
     btnToggleSummary: document.getElementById("btn-toggle-summary"),
     summaryWrap: document.getElementById("summary-wrap"),
@@ -152,8 +189,21 @@
 
   const savedState = loadState();
   const hasResumable = !!(savedState && savedState.startedAt && !savedState.finishedAt);
+  // Also covers a state saved before `submitted` existed (old finished
+  // session that never got a chance to auto-submit) — treat as unsubmitted.
+  const hasUnsubmittedFinished = !!(savedState && savedState.finishedAt && savedState.submitted !== true);
 
-  if (hasResumable) {
+  if (hasUnsubmittedFinished) {
+    // They already answered everything last time; just get them back to
+    // the done screen so the pending submission can retry, no need to
+    // replay the welcome screen or any trials.
+    state = savedState;
+    ensureSessionFields(state);
+    saveState();
+    showScreen("done");
+    renderSummary();
+    submitResponses();
+  } else if (hasResumable) {
     const answeredCount = savedState.trials.filter((t) => t.choice).length;
 
     // A returning participant with in-progress answers is the primary path:
@@ -171,6 +221,8 @@
 
     el.btnResume.addEventListener("click", () => {
       state = savedState;
+      ensureSessionFields(state);
+      saveState();
       showScreen("trial");
       renderTrial();
     });
@@ -368,19 +420,32 @@
     saveState();
     showScreen("done");
     renderSummary();
+    if (state.submitted) {
+      setSubmitState("success");
+    } else {
+      submitResponses();
+    }
+  }
+
+  // aRole/bRole/preferredMethod are derived the same way for both the
+  // downloadable export and the DB submission — keep them in sync here.
+  function computeTrialRoles(trial, scenario) {
+    const aRole = trial.aSource === scenario.baselineClip ? "baseline" : "ours";
+    const bRole = trial.bSource === scenario.baselineClip ? "baseline" : "ours";
+    const preferredMethod =
+      trial.choice === "tie" ? "tie" : trial.choice === "A" ? aRole : bRole;
+    return { aRole, bRole, preferredMethod };
   }
 
   function buildExportPayload() {
     return {
+      sessionId: state.sessionId,
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
       userAgent: navigator.userAgent,
       responses: state.trials.map((trial, i) => {
         const scenario = SCENARIOS.find((s) => s.slug === trial.slug);
-        const aRole = trial.aSource === scenario.baselineClip ? "baseline" : "ours";
-        const bRole = trial.bSource === scenario.baselineClip ? "baseline" : "ours";
-        const choiceRole =
-          trial.choice === "tie" ? "tie" : trial.choice === "A" ? aRole : bRole;
+        const { aRole, bRole, preferredMethod } = computeTrialRoles(trial, scenario);
         return {
           order: i + 1,
           slug: trial.slug,
@@ -392,26 +457,144 @@
           accomplishedA: trial.accomplishedA ? 1 : 0,
           accomplishedB: trial.accomplishedB ? 1 : 0,
           choice: trial.choice,
-          preferredMethod: choiceRole,
+          preferredMethod,
           timeSpentMs: trial.timeSpentMs
         };
       })
     };
   }
 
-  el.btnDownload.addEventListener("click", () => {
-    const payload = buildExportPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], {
-      type: "application/json"
+  // Rows matching the h3_main_experiment_survey_responses table: one row
+  // per scenario, "tidy"/long format so per-scenario and overall metrics
+  // are plain GROUP BY queries on the DB side.
+  function buildSubmissionRows() {
+    return state.trials.map((trial, i) => {
+      const scenario = SCENARIOS.find((s) => s.slug === trial.slug);
+      const { aRole, bRole, preferredMethod } = computeTrialRoles(trial, scenario);
+      return {
+        session_id: state.sessionId,
+        scenario_order: i + 1,
+        scenario_slug: trial.slug,
+        edit_prompt: scenario.edit,
+        a_source: trial.aSource,
+        b_source: trial.bSource,
+        a_role: aRole,
+        b_role: bRole,
+        accomplished_a: !!trial.accomplishedA,
+        accomplished_b: !!trial.accomplishedB,
+        choice: trial.choice,
+        preferred_method: preferredMethod,
+        time_spent_ms: trial.timeSpentMs,
+        session_started_at: state.startedAt,
+        session_finished_at: state.finishedAt,
+        user_agent: navigator.userAgent
+      };
     });
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  function setSubmitState(nextState) {
+    if (!el.submitStatus) return;
+    el.submitStatus.dataset.state = nextState;
+    if (nextState === "submitting") {
+      el.submitStatusText.textContent = "Saving your responses…";
+      el.submitActions.hidden = true;
+    } else if (nextState === "success") {
+      el.submitStatusText.textContent = "Saved — thank you for participating!";
+      el.submitActions.hidden = true;
+      el.downloadHint.textContent =
+        "Optional — a .zip of your results, in case you'd like a copy for yourself.";
+      el.btnDownload.classList.remove("btn-primary", "btn-large");
+      el.btnDownload.classList.add("btn-ghost");
+    } else if (nextState === "error") {
+      el.submitStatusText.textContent =
+        "Couldn't save automatically — your answers are safe on this device.";
+      el.submitActions.hidden = false;
+      el.downloadHint.textContent =
+        "Please download this file and send it to the study organizer.";
+      el.btnDownload.classList.remove("btn-ghost");
+      el.btnDownload.classList.add("btn-primary", "btn-large");
+    }
+  }
+
+  // POSTs all rows for this session in one request (plain insert — no
+  // upsert). Idempotency for retries comes from the unique
+  // (session_id, scenario_slug) constraint instead: if this session's
+  // rows already made it in on a prior attempt whose response we never
+  // saw, Postgres returns 409/23505 (duplicate key), which we treat as
+  // success rather than an error.
+  //
+  // (We tried an upsert via ?on_conflict=... + Prefer: resolution=
+  // merge-duplicates first, but Postgres requires SELECT-level RLS
+  // visibility to evaluate ON CONFLICT DO UPDATE even when nothing
+  // conflicts yet — granting anon SELECT would let anyone read every
+  // submission, which we don't want. Plain insert + 409-as-success gets
+  // the same idempotency without widening anon past insert-only.)
+  async function submitResponses() {
+    setSubmitState("submitting");
+    const rows = buildSubmissionRows();
+    const endpoint = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
+
+    for (let attempt = 1; attempt <= MAX_SUBMIT_ATTEMPTS; attempt++) {
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+            Prefer: "return=minimal"
+          },
+          body: JSON.stringify(rows)
+        });
+        if (!res.ok && res.status !== 409) throw new Error(`HTTP ${res.status}`);
+        state.submitted = true;
+        saveState();
+        setSubmitState("success");
+        return;
+      } catch (err) {
+        if (attempt < MAX_SUBMIT_ATTEMPTS) {
+          await sleep(attempt * 1500);
+        }
+      }
+    }
+    setSubmitState("error");
+  }
+
+  if (el.btnRetrySubmit) {
+    el.btnRetrySubmit.addEventListener("click", () => submitResponses());
+  }
+
+  function triggerBlobDownload(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `video_study_results_${Date.now()}.json`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  }
+
+  el.btnDownload.addEventListener("click", async () => {
+    const payload = buildExportPayload();
+    const json = JSON.stringify(payload, null, 2);
+    const stamp = Date.now();
+
+    if (window.JSZip) {
+      const zip = new window.JSZip();
+      zip.file(`video_study_results_${stamp}.json`, json);
+      const blob = await zip.generateAsync({ type: "blob" });
+      triggerBlobDownload(blob, `video_study_results_${stamp}.zip`);
+    } else {
+      // JSZip failed to load (e.g. offline) — fall back to plain JSON
+      // rather than leaving the button dead.
+      const blob = new Blob([json], { type: "application/json" });
+      triggerBlobDownload(blob, `video_study_results_${stamp}.json`);
+    }
   });
 
   el.btnToggleSummary.addEventListener("click", () => {

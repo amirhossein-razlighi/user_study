@@ -14,8 +14,10 @@ For each of 17 scenarios, a participant:
 4. Picks which option is better overall, or "about the same".
 
 Progress is saved to `localStorage` as they go (refresh-safe / resumable).
-At the end, the participant downloads a JSON file of their results — there
-is no backend yet, see [Next steps](#next-steps-wiring-up-a-database).
+At the end, all 17 answers are submitted to Supabase in one request (see
+[Database](#database-supabase)); a status indicator shows saving/saved/
+failed, with automatic + manual retry and a "download results as .zip"
+fallback if it still can't get through.
 
 ## Running locally
 
@@ -54,6 +56,8 @@ assets/posters/<slug>/  matching poster frames (jpg) for fast perceived load
 data/scenarios.js       the manifest of scenarios (edit sentence, scene, files)
 ```
 
+The only external dependency is [JSZip](https://stuk.github.io/jszip/), loaded from cdnjs in `index.html`, used solely to build the "Download results (.zip)" file client-side.
+
 ### Blinding & randomization
 
 Video files are named neutrally (`clip1.mp4` / `clip2.mp4`), never
@@ -74,22 +78,67 @@ with, e.g.:
 ffmpeg -y -ss 0.6 -i assets/videos/<slug>/clip1.mp4 -frames:v 1 -vf scale=480:-1 -q:v 5 assets/posters/<slug>/clip1.jpg
 ```
 
-## Next steps: wiring up a database
+## Database (Supabase)
 
-This first iteration is frontend-only. Results currently live in
-`localStorage` and are exported by `buildExportPayload()` in
-`assets/js/app.js` (called from the "Download results" button on the done
-screen). To add persistence:
+Responses are stored in the `gruvi-survey` Supabase project (project ref
+`guamrqujwnfejkvsrcar`), in a table dedicated to this study:
+**`public.h3_main_experiment_survey_responses`**. That project already held
+data from unrelated prior studies (`survey_responses`,
+`ablation_modality_responses`) — this table is new and independent, so
+nothing else in the project was touched. A future ablation study should get
+its own `public.<study_name>_responses` table the same way, following this
+one as a template.
 
-- Replace/augment the click handler on `#btn-download` with a `fetch(...)`
-  POST of `buildExportPayload()` to whatever backend we set up (e.g. a
-  Supabase table, a small serverless function, etc.).
-- Everything needed for analysis is already in that payload: the
-  per-scenario A/B source mapping (`aSource`/`bSource`), which role each
-  was (`aRole`/`bRole`: `"baseline"` or `"ours"`), the two accomplishment
-  checkboxes, the overall choice, a convenience `preferredMethod` field,
-  and time spent per scenario. No personal information is collected
-  anywhere in this payload — responses are anonymous by design.
+**Shape:** one row per `(session_id, scenario)` — i.e. 17 rows per
+completed participant, "tidy"/long format, rather than one row per session
+with everything crammed into a jsonb blob. This makes per-scenario and
+overall metrics (win rate, task-accomplishment rate, etc.) plain `GROUP BY`
+queries instead of needing to unnest jsonb every time:
+
+```sql
+-- overall win rate
+select preferred_method, count(*) from h3_main_experiment_survey_responses
+group by preferred_method;
+
+-- per-scenario win rate
+select scenario_slug, preferred_method, count(*)
+from h3_main_experiment_survey_responses
+group by scenario_slug, preferred_method;
+
+-- task-accomplishment rate by method (overall or per scenario) via the
+-- helper view that unpivots accomplished_a/accomplished_b into rows:
+select method, avg(accomplished::int)
+from h3_main_experiment_accomplishment_by_method
+group by method;
+```
+
+Key columns: `session_id` (groups one participant's 17 rows),
+`scenario_order`, `scenario_slug`, `edit_prompt`, `a_source`/`b_source`
+(blinded `clip1`/`clip2`), `a_role`/`b_role` (`baseline`/`ours`, decoded
+from the blinded mapping), `accomplished_a`/`accomplished_b`, `choice`
+(`A`/`B`/`tie`), `preferred_method` (`baseline`/`ours`/`tie`, already
+decoded from `choice` + the roles), `time_spent_ms`, plus session-level
+`session_started_at`/`session_finished_at`/`user_agent` denormalized onto
+every row for filtering without a join.
+
+**Access model:** RLS is enabled; the `anon` key (used by the public site)
+can only `INSERT`, never `SELECT`/`UPDATE`/`DELETE` — matching the pattern
+already used by the other tables in this project. Only the project's
+`service_role` key (kept secret) can read or clean up submissions, e.g. via
+the Supabase SQL editor.
+
+**Submission flow** (`assets/js/app.js`, see `submitResponses()`): on the
+done screen, all 17 rows are POSTed in a single request. A status card
+shows a spinner while in flight, a green check on success, or a red X after
+3 failed attempts (1.5s/3s backoff) — with a "Try again" button and a
+"Download results (.zip)" fallback the participant can send manually.
+Retries (automatic or manual) can't create duplicate rows: a unique
+`(session_id, scenario_slug)` constraint means a retried insert comes back
+as `409` (Postgres `23505`), which the client treats as "already saved"
+rather than an error. If a participant closes the tab before the
+submission ever succeeds, `submitted: false` is remembered in
+`localStorage`, and reopening the page skips straight back to the done
+screen and retries automatically — no need to redo any trials.
 
 ## Debug view (temporary, remove before release)
 
