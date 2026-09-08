@@ -9,6 +9,10 @@
   --accent-soft: #eaefff;
   --success: #1a8a5f;
   --success-soft: #e6f6ef;
+  --strength: #b5590c;
+  --strength-soft: #fbeee0;
+  --warn: #b3261e;
+  --warn-soft: #fbeaea;
   --radius: 14px;
   --shadow: 0 1px 2px rgba(20, 22, 30, 0.04), 0 6px 20px rgba(20, 22, 30, 0.05);
   color-scheme: light;
@@ -26,6 +30,10 @@
     --accent-soft: #202a4a;
     --success: #4fd9a4;
     --success-soft: #14332a;
+    --strength: #f0a35f;
+    --strength-soft: #3a2712;
+    --warn: #f2867d;
+    --warn-soft: #3a1614;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.2), 0 8px 24px rgba(0, 0, 0, 0.35);
     color-scheme: dark;
   }
@@ -131,6 +139,84 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-top: 1px;
+}
+
+.step-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.criteria-list {
+  list-style: none;
+  margin: 2px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.criterion {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  line-height: 1.4;
+}
+
+.criterion-icon {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.criterion-happen {
+  background: var(--success-soft);
+}
+.criterion-happen .criterion-icon {
+  background: var(--success);
+}
+
+.criterion-natural {
+  background: var(--accent-soft);
+}
+.criterion-natural .criterion-icon {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.criterion-strength {
+  background: var(--strength-soft);
+}
+.criterion-strength .criterion-icon {
+  background: var(--strength);
+}
+
+.tie-warning {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border-left: 3px solid var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tie-warning strong {
+  color: var(--warn);
 }
 
 .hint {
