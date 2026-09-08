@@ -12,6 +12,10 @@
   "use strict";
 
   const STORAGE_KEY = "video_study_v1";
+  // Separate from STORAGE_KEY on purpose: this must survive "Start over"
+  // (which clears STORAGE_KEY) so repeat submissions from the same
+  // browser can still be detected later. See DEVICE_ID below.
+  const DEVICE_ID_STORAGE_KEY = "video_study_device_id_v1";
 
   // Anon/publishable key: safe to ship in client code by design — RLS on
   // this table only allows the anon role to INSERT, never read/update/
@@ -55,6 +59,10 @@
   }
 
   function createSessionId() {
+    return createUuid();
+  }
+
+  function createUuid() {
     if (window.crypto && typeof window.crypto.randomUUID === "function") {
       return window.crypto.randomUUID();
     }
@@ -65,6 +73,28 @@
       return v.toString(16);
     });
   }
+
+  // A random id generated once per browser and kept in its own
+  // localStorage key so it outlives "Start over" (which wipes the study
+  // progress key). Not personal data — it identifies a browser, not a
+  // person — but it lets the same-browser case ("did this person submit
+  // more than once?") be checked later during data cleaning, which
+  // session_id alone (regenerated every run) can't do.
+  function getOrCreateDeviceId() {
+    try {
+      const existing = localStorage.getItem(DEVICE_ID_STORAGE_KEY);
+      if (existing) return existing;
+      const created = createUuid();
+      localStorage.setItem(DEVICE_ID_STORAGE_KEY, created);
+      return created;
+    } catch (e) {
+      // localStorage unavailable — fall back to a per-load id; it just
+      // won't be able to catch repeats for this participant.
+      return createUuid();
+    }
+  }
+
+  const DEVICE_ID = getOrCreateDeviceId();
 
   // Patches in sessionId/submitted for a state saved before this feature
   // existed, so old resumed/finished sessions still work.
@@ -440,6 +470,7 @@
   function buildExportPayload() {
     return {
       sessionId: state.sessionId,
+      deviceId: DEVICE_ID,
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
       userAgent: navigator.userAgent,
@@ -473,6 +504,7 @@
       const { aRole, bRole, preferredMethod } = computeTrialRoles(trial, scenario);
       return {
         session_id: state.sessionId,
+        device_id: DEVICE_ID,
         scenario_order: i + 1,
         scenario_slug: trial.slug,
         edit_prompt: scenario.edit,

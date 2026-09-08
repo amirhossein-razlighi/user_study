@@ -121,6 +121,26 @@ decoded from `choice` + the roles), `time_spent_ms`, plus session-level
 `session_started_at`/`session_finished_at`/`user_agent` denormalized onto
 every row for filtering without a join.
 
+**No participant IDs, but repeat submissions are still detectable.** The
+consent screen promises no personal information is collected, so there's
+no login/name/email to key on. Instead, `session_id` (a fresh id every time
+someone starts or restarts the study — groups one submission's 17 rows)
+is paired with `device_id`: a random id generated once and kept in the
+browser's `localStorage` under its own key (`video_study_device_id_v1`,
+separate from the study-progress key, so it survives "Start over"). It
+identifies a *browser*, not a person — clearing site data, private
+browsing, or a different device/browser all evade it — but it's the best
+available signal without collecting anything identifying. During cleaning,
+query the helper view for devices that submitted more than once:
+
+```sql
+select * from public.h3_main_experiment_repeat_devices;
+-- device_id, submission_count, session_ids, first_started_at, last_finished_at
+```
+
+then decide per case whether to keep the first submission, the last, or
+drop the device's rows entirely.
+
 **Access model:** RLS is enabled; the `anon` key (used by the public site)
 can only `INSERT`, never `SELECT`/`UPDATE`/`DELETE` — matching the pattern
 already used by the other tables in this project. Only the project's
