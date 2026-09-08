@@ -377,6 +377,17 @@ h2 {
   font-size: 19px;
   font-weight: 600;
   line-height: 1.35;
+  font-family: "Comic Sans MS", "Comic Sans", "Chalkboard SE", "Marker Felt", cursive, sans-serif;
+}
+
+.edit-highlight {
+  font-weight: 800;
+  color: var(--strength);
+  background: var(--strength-soft);
+  padding: 0 4px;
+  border-radius: 5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 
 /* ---------- Video sections ---------- */

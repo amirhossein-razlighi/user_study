@@ -202,6 +202,30 @@
     videoEl.load();
   }
 
+  function escapeRegExp(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+
+  // Wraps `scenario.highlights` phrases (exact substrings of `edit`) in a
+  // <mark> so participants notice the specific motion being judged.
+  function highlightEditText(text, phrases) {
+    if (!phrases || !phrases.length) return escapeHtml(text);
+    const pattern = phrases
+      .slice()
+      .sort((a, b) => b.length - a.length)
+      .map(escapeRegExp)
+      .join("|");
+    const re = new RegExp(`(${pattern})`, "g");
+    return text
+      .split(re)
+      .map((part) =>
+        phrases.includes(part)
+          ? `<mark class="edit-highlight">${escapeHtml(part)}</mark>`
+          : escapeHtml(part)
+      )
+      .join("");
+  }
+
   function renderTrial() {
     const trial = currentTrial();
     const scenario = currentScenario();
@@ -209,7 +233,7 @@
     el.progressLabel.textContent = `Scenario ${state.currentIndex + 1} of ${state.trials.length}`;
     el.progressFill.style.width = `${((state.currentIndex) / state.trials.length) * 100}%`;
 
-    el.editPrompt.textContent = scenario.edit;
+    el.editPrompt.innerHTML = highlightEditText(scenario.edit, scenario.highlights);
 
     setVideoSource(el.videoInput, scenario.slug, "input");
     setVideoSource(el.videoA, scenario.slug, trial.aSource);
