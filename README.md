@@ -119,7 +119,10 @@ from the blinded mapping), `accomplished_a`/`accomplished_b`, `choice`
 (`A`/`B`/`tie`), `preferred_method` (`baseline`/`ours`/`tie`, already
 decoded from `choice` + the roles), `time_spent_ms`, plus session-level
 `session_started_at`/`session_finished_at`/`user_agent` denormalized onto
-every row for filtering without a join.
+every row for filtering without a join. `debug_mode` (default `false`)
+flags rows submitted while the frontend's debug view was on — should
+always be `false` for real data; filter out (or investigate) any `true`
+rows during cleaning.
 
 **No participant IDs, but repeat submissions are still detectable.** The
 consent screen promises no personal information is collected, so there's
@@ -170,16 +173,22 @@ The welcome screen has a "Debug view" checkbox that, while checked:
   without picking A/B/tie first (handy for quickly eyeballing all 17)
 
 It's for internal use while building the study and must not ship to real
-participants — it breaks blinding.
+participants — it breaks blinding. As a safety net in case a row ever
+does get submitted with it on, every row also carries a permanent
+`debug_mode` column (see [Database](#database-supabase)) that isn't part
+of the code being removed here — it stays in the schema, always `false`,
+so real data is unaffected either way.
 
-Every line of it is wrapped in `DEBUG-ONLY` / `END DEBUG-ONLY` markers in
-`index.html`, `assets/css/style.css`, and `assets/js/app.js`. Run
-`grep -rn "DEBUG-ONLY" .` to find every spot before release:
+Every line of the debug-view UI itself is wrapped in `DEBUG-ONLY` /
+`END DEBUG-ONLY` markers in `index.html`, `assets/css/style.css`, and
+`assets/js/app.js`. Run `grep -rn "DEBUG-ONLY" .` to find every spot
+before release:
 
 - `index.html`: the checkbox block, and two badge `<span>`s
 - `assets/css/style.css`: one rule block
-- `assets/js/app.js`: delete the `debugMode`/toggle-listener block and
-  the badge-rendering block outright; for the other two (inside
-  `updateNextEnabled()` and the `#btn-next` click handler) revert the
-  line to what the comment above it says instead of deleting it, so
-  "Next" goes back to requiring an answer.
+- `assets/js/app.js`: delete the `debugMode`/toggle-listener block, the
+  badge-rendering block, and the `debugMode`/`debug_mode` line in each
+  of `buildExportPayload()`/`buildSubmissionRows()` outright; for the
+  remaining two (inside `updateNextEnabled()` and the `#btn-next` click
+  handler) revert the line to what the comment above it says instead of
+  deleting it, so "Next" goes back to requiring an answer.

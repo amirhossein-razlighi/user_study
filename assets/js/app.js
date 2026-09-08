@@ -471,6 +471,9 @@
     return {
       sessionId: state.sessionId,
       deviceId: DEVICE_ID,
+      // DEBUG-ONLY: delete this line before release (debug_mode column defaults to false in the DB)
+      debugMode,
+      // END DEBUG-ONLY
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
       userAgent: navigator.userAgent,
@@ -505,6 +508,9 @@
       return {
         session_id: state.sessionId,
         device_id: DEVICE_ID,
+        // DEBUG-ONLY: delete this line before release (debug_mode column defaults to false in the DB)
+        debug_mode: debugMode,
+        // END DEBUG-ONLY
         scenario_order: i + 1,
         scenario_slug: trial.slug,
         edit_prompt: scenario.edit,
