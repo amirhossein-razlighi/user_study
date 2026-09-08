@@ -136,8 +136,24 @@
   el.scenarioCount.textContent = String(SCENARIOS.length);
 
   const savedState = loadState();
-  if (savedState && savedState.startedAt && !savedState.finishedAt) {
+  const hasResumable = !!(savedState && savedState.startedAt && !savedState.finishedAt);
+
+  if (hasResumable) {
+    const answeredCount = savedState.trials.filter((t) => t.choice).length;
+
+    // A returning participant with in-progress answers is the primary path:
+    // make "Resume" the prominent button and downgrade "begin" to a clearly
+    // secondary, explicitly-destructive action so progress isn't lost by
+    // accident.
     el.btnResume.hidden = false;
+    el.btnResume.classList.remove("btn-ghost");
+    el.btnResume.classList.add("btn-primary", "btn-large");
+    el.btnResume.textContent = `Resume where I left off (${answeredCount}/${savedState.trials.length} answered)`;
+
+    el.btnStart.classList.remove("btn-primary", "btn-large");
+    el.btnStart.classList.add("btn-ghost");
+    el.btnStart.textContent = "Start over instead";
+
     el.btnResume.addEventListener("click", () => {
       state = savedState;
       showScreen("trial");
@@ -146,6 +162,12 @@
   }
 
   el.btnStart.addEventListener("click", () => {
+    if (hasResumable) {
+      const confirmed = window.confirm(
+        "You have answers saved on this device. Starting over will erase them. Continue?"
+      );
+      if (!confirmed) return;
+    }
     state = freshState();
     state.startedAt = new Date().toISOString();
     saveState();
