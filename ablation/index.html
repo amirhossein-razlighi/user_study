@@ -6,7 +6,7 @@
   <title>Video Editing Modality Ablation Study</title>
   <meta name="description" content="A short study comparing three video-editing guidance setups." />
   <link rel="stylesheet" href="../assets/css/style.css?v=14" />
-  <link rel="stylesheet" href="assets/css/ablation.css?v=1" />
+  <link rel="stylesheet" href="assets/css/ablation.css?v=2" />
   <link rel="icon" href="data:," />
 </head>
 <body>
@@ -124,25 +124,19 @@
             <p class="option-title">Option A <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-a" hidden></span><!-- END DEBUG-ONLY --></p>
             <video class="video" id="video-a" controls playsinline preload="metadata"></video>
             <div class="likert" data-video="a" data-question="success">
-              <p class="likert-label">Edit success</p>
-              <div class="likert-scale" role="radiogroup" aria-label="Edit success, Option A">
-                <button class="likert-btn" type="button" data-value="1">1</button>
-                <button class="likert-btn" type="button" data-value="2">2</button>
-                <button class="likert-btn" type="button" data-value="3">3</button>
-                <button class="likert-btn" type="button" data-value="4">4</button>
-                <button class="likert-btn" type="button" data-value="5">5</button>
+              <div class="likert-label-row">
+                <p class="likert-label">Edit success</p>
+                <span class="likert-value" data-placeholder="Slide to rate">Slide to rate</span>
               </div>
+              <input type="range" class="likert-slider" min="1" max="5" step="1" value="3" aria-label="Edit success, Option A" />
               <div class="likert-endpoints"><span>Not at all</span><span>Completely</span></div>
             </div>
             <div class="likert" data-video="a" data-question="naturalness">
-              <p class="likert-label">Motion naturalness</p>
-              <div class="likert-scale" role="radiogroup" aria-label="Motion naturalness, Option A">
-                <button class="likert-btn" type="button" data-value="1">1</button>
-                <button class="likert-btn" type="button" data-value="2">2</button>
-                <button class="likert-btn" type="button" data-value="3">3</button>
-                <button class="likert-btn" type="button" data-value="4">4</button>
-                <button class="likert-btn" type="button" data-value="5">5</button>
+              <div class="likert-label-row">
+                <p class="likert-label">Motion naturalness</p>
+                <span class="likert-value" data-placeholder="Slide to rate">Slide to rate</span>
               </div>
+              <input type="range" class="likert-slider" min="1" max="5" step="1" value="3" aria-label="Motion naturalness, Option A" />
               <div class="likert-endpoints"><span>Very unnatural</span><span>Very natural</span></div>
             </div>
           </div>
@@ -151,25 +145,19 @@
             <p class="option-title">Option B <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-b" hidden></span><!-- END DEBUG-ONLY --></p>
             <video class="video" id="video-b" controls playsinline preload="metadata"></video>
             <div class="likert" data-video="b" data-question="success">
-              <p class="likert-label">Edit success</p>
-              <div class="likert-scale" role="radiogroup" aria-label="Edit success, Option B">
-                <button class="likert-btn" type="button" data-value="1">1</button>
-                <button class="likert-btn" type="button" data-value="2">2</button>
-                <button class="likert-btn" type="button" data-value="3">3</button>
-                <button class="likert-btn" type="button" data-value="4">4</button>
-                <button class="likert-btn" type="button" data-value="5">5</button>
+              <div class="likert-label-row">
+                <p class="likert-label">Edit success</p>
+                <span class="likert-value" data-placeholder="Slide to rate">Slide to rate</span>
               </div>
+              <input type="range" class="likert-slider" min="1" max="5" step="1" value="3" aria-label="Edit success, Option B" />
               <div class="likert-endpoints"><span>Not at all</span><span>Completely</span></div>
             </div>
             <div class="likert" data-video="b" data-question="naturalness">
-              <p class="likert-label">Motion naturalness</p>
-              <div class="likert-scale" role="radiogroup" aria-label="Motion naturalness, Option B">
-                <button class="likert-btn" type="button" data-value="1">1</button>
-                <button class="likert-btn" type="button" data-value="2">2</button>
-                <button class="likert-btn" type="button" data-value="3">3</button>
-                <button class="likert-btn" type="button" data-value="4">4</button>
-                <button class="likert-btn" type="button" data-value="5">5</button>
+              <div class="likert-label-row">
+                <p class="likert-label">Motion naturalness</p>
+                <span class="likert-value" data-placeholder="Slide to rate">Slide to rate</span>
               </div>
+              <input type="range" class="likert-slider" min="1" max="5" step="1" value="3" aria-label="Motion naturalness, Option B" />
               <div class="likert-endpoints"><span>Very unnatural</span><span>Very natural</span></div>
             </div>
           </div>
@@ -178,25 +166,19 @@
             <p class="option-title">Option C <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-c" hidden></span><!-- END DEBUG-ONLY --></p>
             <video class="video" id="video-c" controls playsinline preload="metadata"></video>
             <div class="likert" data-video="c" data-question="success">
-              <p class="likert-label">Edit success</p>
-              <div class="likert-scale" role="radiogroup" aria-label="Edit success, Option C">
-                <button class="likert-btn" type="button" data-value="1">1</button>
-                <button class="likert-btn" type="button" data-value="2">2</button>
-                <button class="likert-btn" type="button" data-value="3">3</button>
-                <button class="likert-btn" type="button" data-value="4">4</button>
-                <button class="likert-btn" type="button" data-value="5">5</button>
+              <div class="likert-label-row">
+                <p class="likert-label">Edit success</p>
+                <span class="likert-value" data-placeholder="Slide to rate">Slide to rate</span>
               </div>
+              <input type="range" class="likert-slider" min="1" max="5" step="1" value="3" aria-label="Edit success, Option C" />
               <div class="likert-endpoints"><span>Not at all</span><span>Completely</span></div>
             </div>
             <div class="likert" data-video="c" data-question="naturalness">
-              <p class="likert-label">Motion naturalness</p>
-              <div class="likert-scale" role="radiogroup" aria-label="Motion naturalness, Option C">
-                <button class="likert-btn" type="button" data-value="1">1</button>
-                <button class="likert-btn" type="button" data-value="2">2</button>
-                <button class="likert-btn" type="button" data-value="3">3</button>
-                <button class="likert-btn" type="button" data-value="4">4</button>
-                <button class="likert-btn" type="button" data-value="5">5</button>
+              <div class="likert-label-row">
+                <p class="likert-label">Motion naturalness</p>
+                <span class="likert-value" data-placeholder="Slide to rate">Slide to rate</span>
               </div>
+              <input type="range" class="likert-slider" min="1" max="5" step="1" value="3" aria-label="Motion naturalness, Option C" />
               <div class="likert-endpoints"><span>Very unnatural</span><span>Very natural</span></div>
             </div>
           </div>
@@ -266,7 +248,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="data/scenarios.js?v=1"></script>
-  <script src="assets/js/app.js?v=1"></script>
+  <script src="data/scenarios.js?v=2"></script>
+  <script src="assets/js/app.js?v=2"></script>
 </body>
 </html>

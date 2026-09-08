@@ -29,6 +29,15 @@
   const CLIP_METHOD = { clip1: "audio_only", clip2: "text_only", clip3: "both" };
   const ALL_CLIPS = ["clip1", "clip2", "clip3"];
 
+  // Word label per slider value (index 0 = value 1), and the matching
+  // red -> green color per value — same 5 stops as the CSS track
+  // gradient — used to color the live value readout.
+  const LIKERT_LABELS = {
+    success: ["Not at all", "Slightly", "Partially", "Mostly", "Completely"],
+    naturalness: ["Very unnatural", "Somewhat unnatural", "Neutral", "Somewhat natural", "Very natural"]
+  };
+  const RATING_COLORS = ["#dc2626", "#f97316", "#eab308", "#84cc16", "#16a34a"];
+
   /* ---------------- state ---------------- */
 
   let state = null;
@@ -327,12 +336,7 @@
     el.likertGroups.forEach((group) => {
       const pos = group.dataset.video; // "a" | "b" | "c"
       const question = group.dataset.question; // "success" | "naturalness"
-      const value = trial.ratings[pos][question];
-      group.querySelectorAll(".likert-btn").forEach((btn) => {
-        const selected = Number(btn.dataset.value) === value;
-        btn.classList.toggle("selected", selected);
-        btn.setAttribute("aria-pressed", selected ? "true" : "false");
-      });
+      updateLikertDisplay(group, trial.ratings[pos][question]);
     });
 
     setChoiceUI(trial.bestChoice);
@@ -352,6 +356,26 @@
 
     trial.visited = true;
     trialShownAt = performance.now();
+  }
+
+  // Syncs one slider + its live value readout to `value` (1-5, or null
+  // for "not yet answered"). Shared between renderTrial() (restoring a
+  // stored rating) and the slider's own "input" handler (live dragging).
+  function updateLikertDisplay(group, value) {
+    const slider = group.querySelector(".likert-slider");
+    const valueEl = group.querySelector(".likert-value");
+    const question = group.dataset.question;
+    if (value === null) {
+      slider.value = "3";
+      slider.classList.remove("touched");
+      valueEl.textContent = valueEl.dataset.placeholder;
+      valueEl.style.color = "";
+    } else {
+      slider.value = String(value);
+      slider.classList.add("touched");
+      valueEl.textContent = `${value} — ${LIKERT_LABELS[question][value - 1]}`;
+      valueEl.style.color = RATING_COLORS[value - 1];
+    }
   }
 
   function setChoiceUI(choice) {
@@ -378,18 +402,13 @@
   el.likertGroups.forEach((group) => {
     const pos = group.dataset.video;
     const question = group.dataset.question;
-    group.querySelectorAll(".likert-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const trial = currentTrial();
-        trial.ratings[pos][question] = Number(btn.dataset.value);
-        group.querySelectorAll(".likert-btn").forEach((b) => {
-          const selected = b === btn;
-          b.classList.toggle("selected", selected);
-          b.setAttribute("aria-pressed", selected ? "true" : "false");
-        });
-        updateNextEnabled();
-        saveState();
-      });
+    const slider = group.querySelector(".likert-slider");
+    slider.addEventListener("input", () => {
+      const value = Number(slider.value);
+      currentTrial().ratings[pos][question] = value;
+      updateLikertDisplay(group, value);
+      updateNextEnabled();
+      saveState();
     });
   });
 

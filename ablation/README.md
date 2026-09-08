@@ -18,8 +18,13 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 - **Ratings instead of a checkbox.** Each video gets two 1–5 Likert
   ratings — **edit success** ("how well does it perform the edit?") and
   **motion naturalness** — instead of the main study's binary "task
-  accomplished" checkbox. Then a forced choice: which of the three is
-  best overall (A/B/C/tie).
+  accomplished" checkbox. Each rating is a slider (`.likert-slider`) with
+  a red (1, worst) → green (5, best) gradient track; the thumb starts
+  ghosted at the midpoint (not a real "3") until the participant actually
+  drags it — `updateLikertDisplay()` in `app.js` tracks that via a
+  `.touched` class, separate from the underlying `null` rating value, so
+  an untouched slider never gets silently submitted as a real answer.
+  Then a forced choice: which of the three is best overall (A/B/C/tie).
 - **Own Supabase table**: `public.h3_ablation_survey_responses`, plus two
   helper views — `h3_ablation_ratings_by_method` (long-format: one row
   per session/scenario/method, for `avg(success)`/`avg(naturalness)`/

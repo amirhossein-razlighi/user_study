@@ -18,7 +18,7 @@
   max-width: none;
 }
 
-/* ---------- Likert scale ---------- */
+/* ---------- Likert slider ---------- */
 
 .likert {
   width: 100%;
@@ -26,45 +26,122 @@
 }
 
 .likert + .likert {
-  margin-top: 14px;
+  margin-top: 18px;
+}
+
+.likert-label-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 6px;
 }
 
 .likert-label {
-  margin: 0 0 6px;
+  margin: 0;
   font-size: 13px;
   font-weight: 700;
 }
 
-.likert-scale {
-  display: flex;
-  gap: 6px;
+.likert-value {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
-.likert-btn {
-  flex: 1;
-  aspect-ratio: 1;
+/* Gradient always reads red (worst, 1) -> green (best, 5) left to right,
+   independent of the current value, so the meaning is visible at a
+   glance before the participant even touches it. */
+.likert-slider {
+  -webkit-appearance: none;
   appearance: none;
-  border: 2px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 700;
+  width: 100%;
+  height: 36px;
+  margin: 0;
+  background: transparent;
   cursor: pointer;
   touch-action: manipulation;
-  transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.likert-btn.selected {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
+.likert-slider::-webkit-slider-runnable-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #dc2626 0%,
+    #f97316 25%,
+    #eab308 50%,
+    #84cc16 75%,
+    #16a34a 100%
+  );
+}
+
+.likert-slider::-moz-range-track {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #dc2626 0%,
+    #f97316 25%,
+    #eab308 50%,
+    #84cc16 75%,
+    #16a34a 100%
+  );
+}
+
+.likert-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.15s ease;
+}
+
+.likert-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 3px solid var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.15s ease;
+}
+
+/* Before the participant has touched a slider, its thumb sits at the
+   visual midpoint but ghosted, so it reads as "not yet answered" rather
+   than as a real rating of 3. */
+.likert-slider:not(.touched)::-webkit-slider-thumb {
+  opacity: 0.45;
+}
+
+.likert-slider:not(.touched)::-moz-range-thumb {
+  opacity: 0.45;
+}
+
+.likert-slider:focus-visible {
+  outline: none;
+}
+
+.likert-slider:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.likert-slider:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .likert-endpoints {
   display: flex;
   justify-content: space-between;
-  margin-top: 4px;
+  margin-top: 2px;
   font-size: 11px;
   color: var(--text-muted);
 }
