@@ -93,13 +93,24 @@ screen). To add persistence:
 
 ## Debug view (temporary, remove before release)
 
-The welcome screen has a "Debug view" checkbox that reveals which option
-(A/B) is the baseline vs. "ours" for every scenario, as a small badge next
-to each "Option A"/"Option B" title. It's for internal use while building
-the study and must not ship to real participants — it breaks blinding.
+The welcome screen has a "Debug view" checkbox that, while checked:
+
+- reveals which option (A/B) is the baseline vs. "ours" for every
+  scenario, as a small badge next to each "Option A"/"Option B" title
+- unlocks the "Next" button so you can click through every scenario
+  without picking A/B/tie first (handy for quickly eyeballing all 17)
+
+It's for internal use while building the study and must not ship to real
+participants — it breaks blinding.
 
 Every line of it is wrapped in `DEBUG-ONLY` / `END DEBUG-ONLY` markers in
-`index.html`, `assets/css/style.css`, and `assets/js/app.js`. Before
-release, run `grep -rn "DEBUG-ONLY" .` and delete every block it finds
-(4 spots total: one checkbox in `index.html`, two badge `<span>`s in
-`index.html`, one CSS rule block, and two JS blocks in `app.js`).
+`index.html`, `assets/css/style.css`, and `assets/js/app.js`. Run
+`grep -rn "DEBUG-ONLY" .` to find every spot before release:
+
+- `index.html`: the checkbox block, and two badge `<span>`s
+- `assets/css/style.css`: one rule block
+- `assets/js/app.js`: delete the `debugMode`/toggle-listener block and
+  the badge-rendering block outright; for the other two (inside
+  `updateNextEnabled()` and the `#btn-next` click handler) revert the
+  line to what the comment above it says instead of deleting it, so
+  "Next" goes back to requiring an answer.

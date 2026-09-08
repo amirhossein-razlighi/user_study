@@ -286,7 +286,8 @@
   }
 
   function updateNextEnabled() {
-    el.btnNext.disabled = !currentTrial().choice;
+    // DEBUG-ONLY: revert to `el.btnNext.disabled = !currentTrial().choice;` before release
+    el.btnNext.disabled = !debugMode && !currentTrial().choice;
   }
 
   el.checkA.addEventListener("change", () => {
@@ -320,7 +321,8 @@
   }
 
   el.btnNext.addEventListener("click", () => {
-    if (!currentTrial().choice) return;
+    // DEBUG-ONLY: revert to `if (!currentTrial().choice) return;` before release
+    if (!debugMode && !currentTrial().choice) return;
     recordTimeSpent();
     pauseAllVideos();
     if (state.currentIndex < state.trials.length - 1) {
