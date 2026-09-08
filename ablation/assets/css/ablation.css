@@ -1,9 +1,8 @@
 /* Ablation-study-specific styles. Loaded *after* the shared
    ../../assets/css/style.css — reuses its tokens (--accent, --success,
-   --warn, etc.) and components (.card, .option-card, .choice-btn, .video)
-   rather than redefining them. Only the bits unique to a 3-way
-   comparison (Likert scales, a single-column 3-video stack, a 4-way
-   choice row) live here. */
+   --warn, etc.) and components (.card, .option-card, .video) rather than
+   redefining them. Only the bits unique to a 3-way comparison (the
+   Likert slider and the tap-to-rank widget) live here. */
 
 /* Three video cards always stack in one column (unlike the 2-video
    .options-grid, which goes 2-up on desktop) — each card is taller here
@@ -146,16 +145,174 @@
   color: var(--text-muted);
 }
 
-/* ---------- 4-way "best overall" choice (A / B / C / tie) ---------- */
+/* ---------- Tap-to-rank (best -> worst) ---------- */
 
-.choice-row-4 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* Identity colors for A/B/C — purely which-is-which, not a good/bad
+   scale (that's what the likert red-green gradient is for). */
+:root {
+  --chip-a: #3457d5;
+  --chip-a-soft: #eaefff;
+  --chip-b: #b5590c;
+  --chip-b-soft: #fbeee0;
+  --chip-c: #7c3aed;
+  --chip-c-soft: #f1eafe;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --chip-a: #7c9bff;
+    --chip-a-soft: #202a4a;
+    --chip-b: #f0a35f;
+    --chip-b-soft: #3a2712;
+    --chip-c: #b79dfb;
+    --chip-c-soft: #2c2145;
+  }
+}
+
+:root[data-theme="dark"] {
+  --chip-a: #7c9bff;
+  --chip-a-soft: #202a4a;
+  --chip-b: #f0a35f;
+  --chip-b-soft: #3a2712;
+  --chip-c: #b79dfb;
+  --chip-c-soft: #2c2145;
+}
+
+.rank-fieldset {
+  text-align: left;
+}
+
+.rank-section-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.rank-pending {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  margin-bottom: 20px;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+.rank-chip {
+  appearance: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  border: none;
+  border-left: 4px solid var(--chip-a);
+  background: var(--surface);
+  color: var(--chip-a);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 12px 16px;
+  border-radius: 10px;
+  box-shadow: var(--shadow);
+  transition: transform 0.1s ease;
+}
+
+.rank-chip:active {
+  transform: scale(0.97);
+}
+
+.rank-chip-b {
+  border-left-color: var(--chip-b);
+  color: var(--chip-b);
+}
+
+.rank-chip-c {
+  border-left-color: var(--chip-c);
+  color: var(--chip-c);
+}
+
+.rank-slots {
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-@media (min-width: 480px) {
-  .choice-row-4 {
-    grid-template-columns: repeat(4, 1fr);
+@media (min-width: 680px) {
+  .rank-slots {
+    flex-direction: row;
   }
+}
+
+.rank-slot {
+  flex: 1;
+  appearance: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  text-align: left;
+  border: 2px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rank-slot[data-interactive="false"] {
+  cursor: default;
+}
+
+.rank-slot-title {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.rank-slot-icon {
+  font-size: 16px;
+}
+
+.rank-slot-icon-2 {
+  color: #9ca3af;
+}
+
+.rank-slot-icon-3 {
+  color: #b5651d;
+}
+
+.rank-slot-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.rank-slot-value {
+  font-size: 14px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.rank-slot-value.rank-slot-value-empty {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.rank-slot.filled {
+  border-color: var(--chip-color, var(--accent));
+  background: var(--chip-soft, var(--accent-soft));
+}
+
+.rank-slot.filled .rank-slot-value {
+  color: var(--chip-color, var(--accent));
+}
+
+.rank-slot.auto-filled {
+  border-style: dashed;
+}
+
+.rank-hint {
+  margin-top: 12px;
+  font-size: 12px;
 }

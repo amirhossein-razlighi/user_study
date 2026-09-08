@@ -24,11 +24,21 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
   drags it — `updateLikertDisplay()` in `app.js` tracks that via a
   `.touched` class, separate from the underlying `null` rating value, so
   an untouched slider never gets silently submitted as a real answer.
-  Then a forced choice: which of the three is best overall (A/B/C/tie).
+  Then a full ranking, best to worst, via **tap-to-rank**: tap a video
+  card in the "Pending" row and it drops into the next open slot
+  (1st/2nd/3rd); once two are placed the third fills in automatically
+  (only one choice left); tap a filled slot to undo it (`renderRanking()`
+  in `app.js`). No literal drag-and-drop — this gets the same visual
+  outcome as a full mockup with a pending pool + ranked slots, without
+  the reliability issues free-form dragging tends to have on mobile.
+  `trial.rankingManual` (explicit taps) and `effectiveRanking()` (that
+  plus the auto-completed 3rd) are kept separate so undoing a tap always
+  has an unambiguous effect.
 - **Own Supabase table**: `public.h3_ablation_survey_responses`, plus two
   helper views — `h3_ablation_ratings_by_method` (long-format: one row
-  per session/scenario/method, for `avg(success)`/`avg(naturalness)`/
-  win-rate queries) and `h3_ablation_repeat_devices` (same
+  per session/scenario/method, with a `rank` 1–3 column, so
+  `avg(success)`/`avg(naturalness)`/`avg(rank)`/win-rate are all plain
+  `GROUP BY` queries) and `h3_ablation_repeat_devices` (same
   repeat-submission-detection pattern as the main study). None of this
   touches `h3_main_experiment_survey_responses` or the project's other
   tables.

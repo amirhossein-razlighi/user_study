@@ -6,7 +6,7 @@
   <title>Video Editing Modality Ablation Study</title>
   <meta name="description" content="A short study comparing three video-editing guidance setups." />
   <link rel="stylesheet" href="../assets/css/style.css?v=14" />
-  <link rel="stylesheet" href="assets/css/ablation.css?v=2" />
+  <link rel="stylesheet" href="assets/css/ablation.css?v=3" />
   <link rel="icon" href="data:," />
 </head>
 <body>
@@ -55,11 +55,7 @@
             <li>
               <span class="step-num">4</span>
               <div class="step-body">
-                <span>Pick which of the three is best overall.</span>
-                <p class="tie-warning">
-                  <strong>Please avoid "About the same"</strong> unless the three videos are truly
-                  indistinguishable &mdash; use it sparingly.
-                </p>
+                <span>Rank the three from best to worst &mdash; tap them in the order you prefer.</span>
               </div>
             </li>
           </ol>
@@ -184,14 +180,32 @@
           </div>
         </div>
 
-        <fieldset class="choice-fieldset">
-          <legend>Which of the three videos is best overall?</legend>
-          <div class="choice-row-4" role="radiogroup">
-            <button class="choice-btn" data-choice="A" type="button">A</button>
-            <button class="choice-btn" data-choice="B" type="button">B</button>
-            <button class="choice-btn" data-choice="C" type="button">C</button>
-            <button class="choice-btn choice-btn-tie" data-choice="tie" type="button">About the same</button>
+        <fieldset class="choice-fieldset rank-fieldset">
+          <legend>Rank the three videos from best to worst</legend>
+
+          <p class="rank-section-label">Tap in order, best first</p>
+          <div class="rank-pending" id="rank-pending">
+            <button class="rank-chip rank-chip-a" type="button" data-choice="A">Option A</button>
+            <button class="rank-chip rank-chip-b" type="button" data-choice="B">Option B</button>
+            <button class="rank-chip rank-chip-c" type="button" data-choice="C">Option C</button>
           </div>
+
+          <p class="rank-section-label">Your ranking</p>
+          <div class="rank-slots">
+            <button class="rank-slot" type="button" data-rank="0">
+              <span class="rank-slot-title"><span class="rank-slot-icon">&#128081;</span>1st <span class="rank-slot-sub">Best</span></span>
+              <span class="rank-slot-value" data-placeholder="Tap a video above">Tap a video above</span>
+            </button>
+            <button class="rank-slot" type="button" data-rank="1">
+              <span class="rank-slot-title"><span class="rank-slot-icon rank-slot-icon-2">&#9679;</span>2nd <span class="rank-slot-sub">Second</span></span>
+              <span class="rank-slot-value" data-placeholder="Tap a video above">Tap a video above</span>
+            </button>
+            <button class="rank-slot" type="button" data-rank="2">
+              <span class="rank-slot-title"><span class="rank-slot-icon rank-slot-icon-3">&#9679;</span>3rd <span class="rank-slot-sub">Third</span></span>
+              <span class="rank-slot-value" data-placeholder="Tap a video above">Tap a video above</span>
+            </button>
+          </div>
+          <p class="hint rank-hint">The last one fills in automatically. Tap a filled slot to undo it.</p>
         </fieldset>
 
         <div class="nav-row">
@@ -248,7 +262,7 @@
   </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="data/scenarios.js?v=2"></script>
-  <script src="assets/js/app.js?v=2"></script>
+  <script src="data/scenarios.js?v=3"></script>
+  <script src="assets/js/app.js?v=3"></script>
 </body>
 </html>

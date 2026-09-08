@@ -37,6 +37,19 @@
     naturalness: ["Very unnatural", "Somewhat unnatural", "Neutral", "Somewhat natural", "Very natural"]
   };
   const RATING_COLORS = ["#dc2626", "#f97316", "#eab308", "#84cc16", "#16a34a"];
+  const ALL_CHOICES = ["A", "B", "C"];
+
+  // The ranking actually shown/submitted: once exactly two positions are
+  // explicitly tapped, the third is implied (only one choice left) and
+  // filled in automatically — so a full ranking never needs a 3rd tap.
+  function effectiveRanking(trial) {
+    const manual = trial.rankingManual;
+    if (manual.length === 2) {
+      const missing = ALL_CHOICES.find((c) => !manual.includes(c));
+      return manual.concat([missing]);
+    }
+    return manual.slice();
+  }
 
   /* ---------------- state ---------------- */
 
@@ -52,7 +65,11 @@
         b: { success: null, naturalness: null },
         c: { success: null, naturalness: null }
       },
-      bestChoice: null, // "A" | "B" | "C" | "tie"
+      // Explicitly-tapped ranking, best first, e.g. ["B", "A"] after two
+      // taps. Kept separate from the *effective* (possibly auto-completed)
+      // ranking — see effectiveRanking() — so undoing a tap always has an
+      // unambiguous, non-looping effect.
+      rankingManual: [],
       visited: false,
       timeSpentMs: 0
     }));
@@ -123,7 +140,15 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return null;
       const parsed = JSON.parse(raw);
-      if (!parsed || !Array.isArray(parsed.trials) || parsed.trials.length !== SCENARIOS.length) {
+      if (
+        !parsed ||
+        !Array.isArray(parsed.trials) ||
+        parsed.trials.length !== SCENARIOS.length ||
+        // Shape check: a state saved before the tap-to-rank UI (with a
+        // `bestChoice` field instead of `rankingManual`) can't be
+        // resumed — start fresh instead of crashing on it.
+        !parsed.trials.every((t) => Array.isArray(t.rankingManual))
+      ) {
         return null;
       }
       return parsed;
@@ -170,7 +195,8 @@
     videoC: document.getElementById("video-c"),
 
     likertGroups: Array.from(document.querySelectorAll(".likert")),
-    choiceBtns: Array.from(document.querySelectorAll(".choice-btn")),
+    rankChips: Array.from(document.querySelectorAll(".rank-chip")),
+    rankSlots: Array.from(document.querySelectorAll(".rank-slot")),
 
     btnBack: document.getElementById("btn-back"),
     btnNext: document.getElementById("btn-next"),
@@ -231,7 +257,7 @@
     renderSummary();
     submitResponses();
   } else if (hasResumable) {
-    const answeredCount = savedState.trials.filter((t) => t.bestChoice).length;
+    const answeredCount = savedState.trials.filter((t) => t.rankingManual.length >= 2).length;
 
     el.btnResume.hidden = false;
     el.btnResume.classList.remove("btn-ghost");
@@ -339,7 +365,7 @@
       updateLikertDisplay(group, trial.ratings[pos][question]);
     });
 
-    setChoiceUI(trial.bestChoice);
+    renderRanking(trial);
 
     // DEBUG-ONLY: delete this block before release
     const badgeByPos = { a: el.debugBadgeA, b: el.debugBadgeB, c: el.debugBadgeC };
@@ -378,11 +404,43 @@
     }
   }
 
-  function setChoiceUI(choice) {
-    el.choiceBtns.forEach((btn) => {
-      const selected = btn.dataset.choice === choice;
-      btn.classList.toggle("selected", selected);
-      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+  // Syncs the pending chips + the three rank slots to `trial`. A chip
+  // disappears from "Pending" once it's anywhere in the effective
+  // ranking (including the auto-completed 3rd). A slot is only
+  // clickable-to-undo when it holds an *explicit* tap (index <
+  // rankingManual.length) — the auto-filled 3rd isn't directly
+  // removable, since undoing it would just re-derive it right back;
+  // changing the 1st or 2nd pick is what cascades it away.
+  function renderRanking(trial) {
+    const ranking = effectiveRanking(trial);
+
+    el.rankChips.forEach((chip) => {
+      const placed = ranking.includes(chip.dataset.choice);
+      chip.hidden = placed;
+    });
+
+    el.rankSlots.forEach((slot, i) => {
+      const choice = ranking[i] || null;
+      const isManual = i < trial.rankingManual.length;
+      const valueEl = slot.querySelector(".rank-slot-value");
+
+      if (choice) {
+        valueEl.textContent = `Option ${choice}`;
+        valueEl.classList.remove("rank-slot-value-empty");
+        slot.classList.add("filled");
+        slot.classList.toggle("auto-filled", !isManual);
+        slot.dataset.interactive = isManual ? "true" : "false";
+        const key = choice.toLowerCase();
+        slot.style.setProperty("--chip-color", `var(--chip-${key})`);
+        slot.style.setProperty("--chip-soft", `var(--chip-${key}-soft)`);
+      } else {
+        valueEl.textContent = valueEl.dataset.placeholder;
+        valueEl.classList.add("rank-slot-value-empty");
+        slot.classList.remove("filled", "auto-filled");
+        slot.dataset.interactive = "false";
+        slot.style.removeProperty("--chip-color");
+        slot.style.removeProperty("--chip-soft");
+      }
     });
   }
 
@@ -394,7 +452,7 @@
 
   function updateNextEnabled() {
     const trial = currentTrial();
-    const ready = allRated(trial) && !!trial.bestChoice;
+    const ready = allRated(trial) && effectiveRanking(trial).length === 3;
     // DEBUG-ONLY: revert to `el.btnNext.disabled = !ready;` before release
     el.btnNext.disabled = !debugMode && !ready;
   }
@@ -412,10 +470,24 @@
     });
   });
 
-  el.choiceBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      currentTrial().bestChoice = btn.dataset.choice;
-      setChoiceUI(btn.dataset.choice);
+  el.rankChips.forEach((chip) => {
+    chip.addEventListener("click", () => {
+      const trial = currentTrial();
+      const choice = chip.dataset.choice;
+      if (trial.rankingManual.length >= 3 || trial.rankingManual.includes(choice)) return;
+      trial.rankingManual.push(choice);
+      renderRanking(trial);
+      updateNextEnabled();
+      saveState();
+    });
+  });
+
+  el.rankSlots.forEach((slot, i) => {
+    slot.addEventListener("click", () => {
+      if (slot.dataset.interactive !== "true") return;
+      const trial = currentTrial();
+      trial.rankingManual.splice(i, 1);
+      renderRanking(trial);
       updateNextEnabled();
       saveState();
     });
@@ -434,7 +506,7 @@
 
   el.btnNext.addEventListener("click", () => {
     const trial = currentTrial();
-    const ready = allRated(trial) && !!trial.bestChoice;
+    const ready = allRated(trial) && effectiveRanking(trial).length === 3;
     // DEBUG-ONLY: revert to `if (!ready) return;` before release
     if (!debugMode && !ready) return;
     recordTimeSpent();
@@ -489,15 +561,24 @@
     }
   }
 
-  // Roles/best-method derivation shared between the downloadable export and
+  // Roles/ranking derivation shared between the downloadable export and
   // the DB submission — keep them in sync here.
   function computeTrialMethods(trial) {
     const methods = trial.sources.map((clip) => CLIP_METHOD[clip]); // [aMethod, bMethod, cMethod]
-    const bestMethod =
-      trial.bestChoice === "tie"
-        ? "tie"
-        : methods[{ A: 0, B: 1, C: 2 }[trial.bestChoice]];
-    return { aMethod: methods[0], bMethod: methods[1], cMethod: methods[2], bestMethod };
+    const choiceIndex = { A: 0, B: 1, C: 2 };
+    const ranking = effectiveRanking(trial); // ["B", "A", "C"] -> best to worst
+    const rankedMethods = ranking.map((choice) => methods[choiceIndex[choice]]);
+    return {
+      aMethod: methods[0],
+      bMethod: methods[1],
+      cMethod: methods[2],
+      firstChoice: ranking[0] || null,
+      secondChoice: ranking[1] || null,
+      thirdChoice: ranking[2] || null,
+      firstMethod: rankedMethods[0] || null,
+      secondMethod: rankedMethods[1] || null,
+      thirdMethod: rankedMethods[2] || null
+    };
   }
 
   function buildExportPayload() {
@@ -512,7 +593,17 @@
       userAgent: navigator.userAgent,
       responses: state.trials.map((trial, i) => {
         const scenario = SCENARIOS.find((s) => s.slug === trial.slug);
-        const { aMethod, bMethod, cMethod, bestMethod } = computeTrialMethods(trial);
+        const {
+          aMethod,
+          bMethod,
+          cMethod,
+          firstChoice,
+          secondChoice,
+          thirdChoice,
+          firstMethod,
+          secondMethod,
+          thirdMethod
+        } = computeTrialMethods(trial);
         return {
           order: i + 1,
           slug: trial.slug,
@@ -529,8 +620,12 @@
           bNaturalness: trial.ratings.b.naturalness,
           cSuccess: trial.ratings.c.success,
           cNaturalness: trial.ratings.c.naturalness,
-          bestChoice: trial.bestChoice,
-          bestMethod,
+          firstChoice,
+          secondChoice,
+          thirdChoice,
+          firstMethod,
+          secondMethod,
+          thirdMethod,
           timeSpentMs: trial.timeSpentMs
         };
       })
@@ -542,7 +637,17 @@
   function buildSubmissionRows() {
     return state.trials.map((trial, i) => {
       const scenario = SCENARIOS.find((s) => s.slug === trial.slug);
-      const { aMethod, bMethod, cMethod, bestMethod } = computeTrialMethods(trial);
+      const {
+        aMethod,
+        bMethod,
+        cMethod,
+        firstChoice,
+        secondChoice,
+        thirdChoice,
+        firstMethod,
+        secondMethod,
+        thirdMethod
+      } = computeTrialMethods(trial);
       return {
         session_id: state.sessionId,
         device_id: DEVICE_ID,
@@ -564,8 +669,12 @@
         b_naturalness: trial.ratings.b.naturalness,
         c_success: trial.ratings.c.success,
         c_naturalness: trial.ratings.c.naturalness,
-        best_choice: trial.bestChoice,
-        best_method: bestMethod,
+        first_choice: firstChoice,
+        second_choice: secondChoice,
+        third_choice: thirdChoice,
+        first_method: firstMethod,
+        second_method: secondMethod,
+        third_method: thirdMethod,
         time_spent_ms: trial.timeSpentMs,
         session_started_at: state.startedAt,
         session_finished_at: state.finishedAt,
@@ -683,7 +792,7 @@
         (r) => `<tr>
           <td>${r.order}</td>
           <td>${escapeHtml(r.slug)}</td>
-          <td>${r.bestChoice === "tie" ? "Tie" : r.bestChoice}</td>
+          <td>${r.firstChoice} &gt; ${r.secondChoice} &gt; ${r.thirdChoice}</td>
           <td>${r.aSuccess}/${r.aNaturalness}</td>
           <td>${r.bSuccess}/${r.bNaturalness}</td>
           <td>${r.cSuccess}/${r.cNaturalness}</td>
@@ -692,7 +801,7 @@
       .join("");
     el.summaryTable.innerHTML = `
       <thead>
-        <tr><th>#</th><th>Scenario</th><th>Best</th><th>A (succ/nat)</th><th>B (succ/nat)</th><th>C (succ/nat)</th></tr>
+        <tr><th>#</th><th>Scenario</th><th>Ranking</th><th>A (succ/nat)</th><th>B (succ/nat)</th><th>C (succ/nat)</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     `;
