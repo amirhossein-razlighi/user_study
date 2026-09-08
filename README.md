@@ -75,8 +75,9 @@ screen). To add persistence:
 - Replace/augment the click handler on `#btn-download` with a `fetch(...)`
   POST of `buildExportPayload()` to whatever backend we set up (e.g. a
   Supabase table, a small serverless function, etc.).
-- Everything needed for analysis is already in that payload: participant
-  id, per-scenario A/B source mapping (`aSource`/`bSource`), which role
-  each was (`aRole`/`bRole`: `"baseline"` or `"ours"`), the two
-  accomplishment checkboxes, the overall choice, a convenience
-  `preferredMethod` field, and time spent per scenario.
+- Everything needed for analysis is already in that payload: the
+  per-scenario A/B source mapping (`aSource`/`bSource`), which role each
+  was (`aRole`/`bRole`: `"baseline"` or `"ours"`), the two accomplishment
+  checkboxes, the overall choice, a convenience `preferredMethod` field,
+  and time spent per scenario. No personal information is collected
+  anywhere in this payload — responses are anonymous by design.

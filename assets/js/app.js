@@ -35,7 +35,6 @@
       };
     });
     return {
-      participantId: "",
       startedAt: null,
       finishedAt: null,
       currentIndex: 0,
@@ -93,7 +92,6 @@
   };
 
   const el = {
-    participantId: document.getElementById("participant-id"),
     btnStart: document.getElementById("btn-start"),
     btnResume: document.getElementById("btn-resume"),
     scenarioCount: document.getElementById("scenario-count"),
@@ -142,7 +140,6 @@
     el.btnResume.hidden = false;
     el.btnResume.addEventListener("click", () => {
       state = savedState;
-      el.participantId.value = state.participantId || "";
       showScreen("trial");
       renderTrial();
     });
@@ -150,7 +147,6 @@
 
   el.btnStart.addEventListener("click", () => {
     state = freshState();
-    state.participantId = el.participantId.value.trim();
     state.startedAt = new Date().toISOString();
     saveState();
     showScreen("trial");
@@ -302,7 +298,6 @@
 
   function buildExportPayload() {
     return {
-      participantId: state.participantId || null,
       startedAt: state.startedAt,
       finishedAt: state.finishedAt,
       userAgent: navigator.userAgent,
@@ -337,18 +332,13 @@
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const idPart = payload.participantId ? `_${slugify(payload.participantId)}` : "";
     a.href = url;
-    a.download = `video_study_results${idPart}_${Date.now()}.json`;
+    a.download = `video_study_results_${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
   });
-
-  function slugify(str) {
-    return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  }
 
   el.btnToggleSummary.addEventListener("click", () => {
     const hidden = el.summaryWrap.hidden;
