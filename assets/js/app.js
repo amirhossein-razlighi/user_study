@@ -117,10 +117,25 @@
     btnToggleSummary: document.getElementById("btn-toggle-summary"),
     summaryWrap: document.getElementById("summary-wrap"),
     summaryTable: document.getElementById("summary-table"),
-    btnRestart2: document.getElementById("btn-restart-2")
+    btnRestart2: document.getElementById("btn-restart-2"),
+
+    // DEBUG-ONLY: delete these three lines before release
+    debugToggle: document.getElementById("debug-toggle"),
+    debugBadgeA: document.getElementById("debug-badge-a"),
+    debugBadgeB: document.getElementById("debug-badge-b")
   };
 
   let trialShownAt = 0;
+
+  // DEBUG-ONLY: delete this whole block before release
+  let debugMode = false;
+  if (el.debugToggle) {
+    el.debugToggle.addEventListener("change", () => {
+      debugMode = el.debugToggle.checked;
+      if (state && !screens.trial.hidden) renderTrial();
+    });
+  }
+  // END DEBUG-ONLY
 
   /* ---------------- screen switching ---------------- */
 
@@ -243,6 +258,17 @@
     el.checkB.checked = !!trial.accomplishedB;
 
     setChoiceUI(trial.choice);
+
+    // DEBUG-ONLY: delete this block before release
+    if (el.debugBadgeA && el.debugBadgeB) {
+      const aRole = trial.aSource === scenario.baselineClip ? "baseline" : "ours";
+      const bRole = trial.bSource === scenario.baselineClip ? "baseline" : "ours";
+      el.debugBadgeA.hidden = !debugMode;
+      el.debugBadgeB.hidden = !debugMode;
+      el.debugBadgeA.textContent = aRole;
+      el.debugBadgeB.textContent = bRole;
+    }
+    // END DEBUG-ONLY
 
     el.btnBack.disabled = state.currentIndex === 0;
     updateNextEnabled();

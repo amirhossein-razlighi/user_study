@@ -34,6 +34,15 @@ tag rather than `fetch()`.)
 Settings → Pages → Build and deployment → Source: **Deploy from a branch**,
 branch **`main`**, folder **`/ (root)`**. No Actions workflow is needed.
 
+GitHub Pages caches assets for ~10 minutes (`cache-control: max-age=600`).
+`index.html` loads `style.css`, `scenarios.js`, and `app.js` with a
+`?v=N` query string for exactly this reason — bump `N` for all three
+`<link>`/`<script>` tags any time you change one of those files, so
+anyone with a browser tab already open (or a warm cache) is guaranteed
+to fetch the new version instead of silently keeping the stale one.
+Without it, a reload can still serve a cached copy of the old file for
+up to 10 minutes.
+
 ## Project structure
 
 ```
@@ -81,3 +90,16 @@ screen). To add persistence:
   checkboxes, the overall choice, a convenience `preferredMethod` field,
   and time spent per scenario. No personal information is collected
   anywhere in this payload — responses are anonymous by design.
+
+## Debug view (temporary, remove before release)
+
+The welcome screen has a "Debug view" checkbox that reveals which option
+(A/B) is the baseline vs. "ours" for every scenario, as a small badge next
+to each "Option A"/"Option B" title. It's for internal use while building
+the study and must not ship to real participants — it breaks blinding.
+
+Every line of it is wrapped in `DEBUG-ONLY` / `END DEBUG-ONLY` markers in
+`index.html`, `assets/css/style.css`, and `assets/js/app.js`. Before
+release, run `grep -rn "DEBUG-ONLY" .` and delete every block it finds
+(4 spots total: one checkbox in `index.html`, two badge `<span>`s in
+`index.html`, one CSS rule block, and two JS blocks in `app.js`).

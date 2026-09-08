@@ -382,8 +382,8 @@ h2 {
 
 .edit-highlight {
   font-weight: 800;
-  color: var(--strength);
-  background: var(--strength-soft);
+  color: var(--accent-contrast);
+  background: var(--accent);
   padding: 0 4px;
   border-radius: 5px;
   box-decoration-break: clone;
@@ -613,3 +613,27 @@ h2 {
 }
 
 #btn-restart-2 { margin-top: 8px; width: 100%; }
+
+/* ================ DEBUG-ONLY: delete this whole block before release ================ */
+
+.debug-toggle-row {
+  margin: 6px 0 14px;
+  border: 1px dashed var(--warn);
+  background: var(--warn-soft);
+}
+
+.debug-badge {
+  display: inline-block;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #fff;
+  background: var(--warn);
+  padding: 2px 7px;
+  border-radius: 999px;
+  vertical-align: middle;
+}
+
+/* ================ END DEBUG-ONLY ================ */

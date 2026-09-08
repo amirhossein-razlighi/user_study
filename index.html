@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Video Editing User Study</title>
   <meta name="description" content="A short study comparing two AI video-editing methods." />
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/style.css?v=8" />
   <link rel="icon" href="data:," />
 </head>
 <body>
@@ -83,6 +83,14 @@
           </p>
         </div>
 
+        <!-- DEBUG-ONLY: delete this whole block before release -->
+        <label class="checkbox-row debug-toggle-row">
+          <input type="checkbox" id="debug-toggle" />
+          <span class="checkbox-box" aria-hidden="true"></span>
+          <span>Debug view (reveals baseline vs. ours per scenario) &mdash; internal use only</span>
+        </label>
+        <!-- END DEBUG-ONLY -->
+
         <button class="btn btn-ghost" id="btn-resume" hidden>Resume where I left off</button>
         <button class="btn btn-primary btn-large" id="btn-start">I consent and begin</button>
       </div>
@@ -114,7 +122,7 @@
 
         <div class="options-grid">
           <div class="option-card" id="option-card-a">
-            <p class="option-title">Option A</p>
+            <p class="option-title">Option A <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-a" hidden></span><!-- END DEBUG-ONLY --></p>
             <video class="video" id="video-a" controls playsinline preload="metadata"></video>
             <label class="checkbox-row">
               <input type="checkbox" id="check-a" />
@@ -124,7 +132,7 @@
           </div>
 
           <div class="option-card" id="option-card-b">
-            <p class="option-title">Option B</p>
+            <p class="option-title">Option B <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-b" hidden></span><!-- END DEBUG-ONLY --></p>
             <video class="video" id="video-b" controls playsinline preload="metadata"></video>
             <label class="checkbox-row">
               <input type="checkbox" id="check-b" />
@@ -187,7 +195,7 @@
 
   </div>
 
-  <script src="data/scenarios.js"></script>
-  <script src="assets/js/app.js"></script>
+  <script src="data/scenarios.js?v=8"></script>
+  <script src="assets/js/app.js?v=8"></script>
 </body>
 </html>
