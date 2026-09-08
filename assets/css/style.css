@@ -636,4 +636,14 @@ h2 {
   vertical-align: middle;
 }
 
+/* `.debug-badge { display: inline-block }` above has the same
+   specificity as the browser's built-in `[hidden] { display: none }`
+   rule, and (being an author style) wins the tie — so without this,
+   the badge stays visible even when the `hidden` attribute is set and
+   debug view is off. This is the actual on/off switch; do not remove
+   it separately from the block above. */
+.debug-badge[hidden] {
+  display: none;
+}
+
 /* ================ END DEBUG-ONLY ================ */
