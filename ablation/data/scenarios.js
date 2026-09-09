@@ -15,9 +15,24 @@ const SCENARIOS = [
     highlights: ["splashes"]
   },
   {
+    slug: "car_door_opens",
+    edit: "The car door swings open.",
+    highlights: ["swings open"]
+  },
+  {
     slug: "cat_yawns",
     edit: "The cat yawns widely.",
     highlights: ["yawns"]
+  },
+  {
+    slug: "gen_cow_field",
+    edit: "The cow moos loudly.",
+    highlights: ["moos loudly"]
+  },
+  {
+    slug: "gen_dolphin_sea",
+    edit: "The dolphin leaps out of the water.",
+    highlights: ["leaps out of the water"]
   },
   {
     slug: "gen_frog_jumps",
@@ -33,6 +48,36 @@ const SCENARIOS = [
     slug: "gen_glass_table",
     edit: "The glass tips over and spills the water.",
     highlights: ["tips over", "spills"]
+  },
+  {
+    slug: "gen_koi_pond",
+    edit: "The koi jumps out of the water.",
+    highlights: ["jumps out"]
+  },
+  {
+    slug: "gen_sealion",
+    edit: "The sea lion barks with its head raised.",
+    highlights: ["barks", "head raised"]
+  },
+  {
+    slug: "gen_windmill",
+    edit: "The windmill blades start turning.",
+    highlights: ["blades", "turning"]
+  },
+  {
+    slug: "gen_wolf_hill",
+    edit: "The wolf howls with its head tilted up.",
+    highlights: ["howls", "head tilted up"]
+  },
+  {
+    slug: "gen_woman_desk",
+    edit: "The woman yawns widely.",
+    highlights: ["yawns"]
+  },
+  {
+    slug: "gen_woman_door",
+    edit: "The woman opens the door and walks inside.",
+    highlights: ["opens", "walks"]
   },
   {
     slug: "goldfish",

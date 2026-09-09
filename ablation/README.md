@@ -3,8 +3,7 @@
 Sibling of the main study one level up ([../README.md](../README.md)) — same
 theme, same infrastructure, same conventions. Compares three guidance
 setups for the video edit: **audio-only**, **text-only**, and **both**,
-across 7 scenarios (of the 16 in `../ablation/`; the rest are missing one
-or both non-`both` variants and can be added later the same way).
+across all 16 scenarios in `../ablation/`.
 
 Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 
@@ -50,9 +49,9 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
   studies.
 - **Shares the root stylesheet.** `index.html` loads
   `../assets/css/style.css` (the main study's theme/tokens) plus a small
-  `assets/css/ablation.css` for what's unique here: the Likert widget, a
+  `assets/css/ablation.css` for what's unique here: the Likert slider, a
   1-column 3-video stack (`.options-grid-3` — a 2-up grid doesn't fit 3
-  taller cards well), and a 4-way choice row.
+  taller cards well), and the tap-to-rank widget.
 
 ## Debug view (temporary, remove before release)
 
@@ -63,8 +62,9 @@ every spot in this sub-study before release.
 
 ## Adding more scenarios
 
-Once a scenario in `../ablation/<slug>/` has all three of `both/`,
-`text_only/`, `audio_only/` populated:
+All 16 scenarios in `../ablation/` are live here as of the last sync. If
+more scenarios show up there later, once a scenario has all three of
+`both/`, `text_only/`, `audio_only/` populated:
 
 ```bash
 slug=<slug>
