@@ -168,6 +168,16 @@ submission ever succeeds, `submitted: false` is remembered in
 `localStorage`, and reopening the page skips straight back to the done
 screen and retries automatically — no need to redo any trials.
 
+Before any of that, `submitResponses()` first calls
+`firstIncompleteTrialIndex()` (every DB column is `NOT NULL`, so an
+incomplete trial would otherwise fail with an unhelpful generic error).
+Normally impossible to trigger — `Next` already requires a full answer —
+but debug view deliberately bypasses that, so it's easy to reach in
+testing. When it finds one, the status card shows a distinct blue "info"
+state ("You have unanswered scenarios! Go back and fill them in.") with a
+**Go back and answer** button that jumps straight to that trial, instead
+of wasting the 3 retry attempts on a request that can never succeed.
+
 ## Debug view (temporary, remove before release)
 
 The welcome screen has a "Debug view" checkbox that, while checked:

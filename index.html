@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Video Editing User Study</title>
   <meta name="description" content="A short study comparing two AI video-editing methods." />
-  <link rel="stylesheet" href="assets/css/style.css?v=14" />
+  <link rel="stylesheet" href="assets/css/style.css?v=15" />
   <link rel="icon" href="data:," />
 </head>
 <body>
@@ -182,10 +182,16 @@
             <svg class="status-icon status-icon-x" viewBox="0 0 24 24" fill="none">
               <path d="M5 5l14 14M19 5L5 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
             </svg>
+            <svg class="status-icon status-icon-info" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+              <line x1="12" y1="7.5" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="12" cy="16.3" r="1.15" fill="currentColor"/>
+            </svg>
           </div>
           <p class="submit-status-text" id="submit-status-text">Saving your responses&hellip;</p>
           <div class="submit-actions" id="submit-actions" hidden>
             <button class="btn btn-ghost" id="btn-retry-submit">Try again</button>
+            <button class="btn btn-primary" id="btn-go-to-incomplete" hidden>Go back and answer</button>
           </div>
         </div>
 
@@ -212,6 +218,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="data/scenarios.js?v=14"></script>
-  <script src="assets/js/app.js?v=14"></script>
+  <script src="assets/js/app.js?v=15"></script>
 </body>
 </html>

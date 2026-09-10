@@ -653,6 +653,7 @@ h2 {
 
 .status-icon-check { color: var(--success); }
 .status-icon-x { color: var(--warn); }
+.status-icon-info { color: var(--accent); }
 
 .submit-status[data-state="submitting"] .status-icon { display: none; }
 
@@ -662,6 +663,9 @@ h2 {
 .submit-status[data-state="error"] .spinner { display: none; }
 .submit-status[data-state="error"] .status-icon-x { display: block; }
 
+.submit-status[data-state="incomplete"] .spinner { display: none; }
+.submit-status[data-state="incomplete"] .status-icon-info { display: block; }
+
 .submit-status-text {
   margin: 4px 0 0;
   font-weight: 600;
@@ -670,6 +674,7 @@ h2 {
 
 .submit-status[data-state="error"] .submit-status-text { color: var(--warn); }
 .submit-status[data-state="success"] .submit-status-text { color: var(--success); }
+.submit-status[data-state="incomplete"] .submit-status-text { color: var(--accent); }
 
 .submit-actions { margin-top: 4px; }
 

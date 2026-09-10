@@ -178,6 +178,7 @@
     submitStatusText: document.getElementById("submit-status-text"),
     submitActions: document.getElementById("submit-actions"),
     btnRetrySubmit: document.getElementById("btn-retry-submit"),
+    btnGoToIncomplete: document.getElementById("btn-go-to-incomplete"),
     downloadHint: document.getElementById("download-hint"),
 
     btnDownload: document.getElementById("btn-download"),
@@ -534,6 +535,20 @@
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
+  // Index of the first trial missing a choice, or -1 if every trial is
+  // complete. Normally impossible to reach the done screen with an
+  // incomplete trial (Next requires it) — but debug view deliberately
+  // bypasses that check, and the DB's NOT NULL `choice` column will
+  // reject an incomplete row outright. Checking this client-side first
+  // means we can say exactly what's wrong instead of surfacing the
+  // resulting 400 as a generic "couldn't save" error.
+  function firstIncompleteTrialIndex() {
+    for (let i = 0; i < state.trials.length; i++) {
+      if (!state.trials[i].choice) return i;
+    }
+    return -1;
+  }
+
   function setSubmitState(nextState) {
     if (!el.submitStatus) return;
     el.submitStatus.dataset.state = nextState;
@@ -551,10 +566,18 @@
       el.submitStatusText.textContent =
         "Couldn't save automatically — your answers are safe on this device.";
       el.submitActions.hidden = false;
+      el.btnRetrySubmit.hidden = false;
+      el.btnGoToIncomplete.hidden = true;
       el.downloadHint.textContent =
         "Please download this file and send it to the study organizer.";
       el.btnDownload.classList.remove("btn-ghost");
       el.btnDownload.classList.add("btn-primary", "btn-large");
+    } else if (nextState === "incomplete") {
+      el.submitStatusText.textContent =
+        "You have unanswered scenarios! Go back and fill them in.";
+      el.submitActions.hidden = false;
+      el.btnRetrySubmit.hidden = true;
+      el.btnGoToIncomplete.hidden = false;
     }
   }
 
@@ -572,6 +595,11 @@
   // submission, which we don't want. Plain insert + 409-as-success gets
   // the same idempotency without widening anon past insert-only.)
   async function submitResponses() {
+    if (firstIncompleteTrialIndex() !== -1) {
+      setSubmitState("incomplete");
+      return;
+    }
+
     setSubmitState("submitting");
     const rows = buildSubmissionRows();
     const endpoint = `${SUPABASE_URL}/rest/v1/${SUPABASE_TABLE}`;
@@ -604,6 +632,17 @@
 
   if (el.btnRetrySubmit) {
     el.btnRetrySubmit.addEventListener("click", () => submitResponses());
+  }
+
+  if (el.btnGoToIncomplete) {
+    el.btnGoToIncomplete.addEventListener("click", () => {
+      const idx = firstIncompleteTrialIndex();
+      if (idx === -1) return;
+      state.currentIndex = idx;
+      saveState();
+      showScreen("trial");
+      renderTrial();
+    });
   }
 
   function triggerBlobDownload(blob, filename) {

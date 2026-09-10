@@ -48,7 +48,13 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
   `GROUP BY` queries) and `h3_ablation_repeat_devices` (same
   repeat-submission-detection pattern as the main study). None of this
   touches `h3_main_experiment_survey_responses` or the project's other
-  tables.
+  tables. Same submission flow as the main study (see
+  [../README.md](../README.md#database-supabase)) — including the
+  pre-flight `firstIncompleteTrialIndex()` check (adapted here to check
+  `allRated()` + a full `effectiveRanking()` per trial instead of a single
+  `choice`) that shows "You have unanswered scenarios!" with a jump-back
+  button instead of a generic error, for the case debug view makes
+  possible: an incomplete trial reaching the done screen.
 - **Own `localStorage` key** (`ablation_study_v1`) so progress doesn't
   collide with the main study's (`video_study_v1`) — both pages share an
   origin (`github.io`), just different paths. `device_id`
