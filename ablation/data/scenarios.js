@@ -35,11 +35,6 @@ const SCENARIOS = [
     highlights: ["leaps out of the water"]
   },
   {
-    slug: "gen_frog_jumps",
-    edit: "The frog jumps off the lily pad into the water.",
-    highlights: ["jumps off"]
-  },
-  {
     slug: "gen_glass_edge",
     edit: "The glass falls off the table and shatters on the floor.",
     highlights: ["falls", "shatters"]
@@ -50,16 +45,6 @@ const SCENARIOS = [
     highlights: ["tips over", "spills"]
   },
   {
-    slug: "gen_koi_pond",
-    edit: "The koi jumps out of the water.",
-    highlights: ["jumps out"]
-  },
-  {
-    slug: "gen_sealion",
-    edit: "The sea lion barks with its head raised.",
-    highlights: ["barks", "head raised"]
-  },
-  {
     slug: "gen_windmill",
     edit: "The windmill blades start turning.",
     highlights: ["blades", "turning"]
@@ -68,11 +53,6 @@ const SCENARIOS = [
     slug: "gen_wolf_hill",
     edit: "The wolf howls with its head tilted up.",
     highlights: ["howls", "head tilted up"]
-  },
-  {
-    slug: "gen_woman_desk",
-    edit: "The woman yawns widely.",
-    highlights: ["yawns"]
   },
   {
     slug: "gen_woman_door",

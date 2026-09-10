@@ -3,7 +3,13 @@
 Sibling of the main study one level up ([../README.md](../README.md)) — same
 theme, same infrastructure, same conventions. Compares three guidance
 setups for the video edit: **audio-only**, **text-only**, and **both**,
-across all 16 scenarios in `../ablation/`.
+across 12 of the 16 scenarios in `../ablation/` (`gen_frog_jumps`,
+`gen_koi_pond`, `gen_sealion`, and `gen_woman_desk` were dropped from this
+study by request).
+
+`car_door_opens`'s "both" video (here and in the main study) is
+`B_candidate_iter03_av.mp4` from `../user_study/car_door_opens/` — the
+same file in both places, not each study's own `both`/iter-4 render.
 
 Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 
@@ -11,9 +17,11 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 
 - **Three videos per scenario, not two.** Options A/B/C are `clip1`/
   `clip2`/`clip3`, blinded the same way (neutral file names, on-screen
-  position independently randomized per scenario per participant). Which
-  physical clip is which method is fixed globally in `assets/js/app.js`
-  (`CLIP_METHOD`), not per scenario.
+  position independently randomized per scenario per participant via
+  `shuffledClips()`). Which physical clip is which method is fixed
+  globally in `assets/js/app.js` (`CLIP_METHOD`), not per scenario.
+  Scenario order is also shuffled per participant (`shuffledSlugOrder()`)
+  — same randomization pattern as the main study.
 - **Ratings instead of a checkbox.** Each video gets two 1–5 Likert
   ratings — **edit success** ("how well does it perform the edit?") and
   **motion naturalness** — instead of the main study's binary "task
@@ -62,9 +70,10 @@ every spot in this sub-study before release.
 
 ## Adding more scenarios
 
-All 16 scenarios in `../ablation/` are live here as of the last sync. If
-more scenarios show up there later, once a scenario has all three of
-`both/`, `text_only/`, `audio_only/` populated:
+12 of the 16 scenarios in `../ablation/` are live here (see the exclusions
+noted above). If more scenarios show up there later, or one of the
+excluded ones should come back, once a scenario has all three of `both/`,
+`text_only/`, `audio_only/` populated:
 
 ```bash
 slug=<slug>
