@@ -209,6 +209,7 @@
 
     btnBack: document.getElementById("btn-back"),
     btnNext: document.getElementById("btn-next"),
+    nextHint: document.getElementById("next-hint"),
 
     submitStatus: document.getElementById("submit-status"),
     submitStatusText: document.getElementById("submit-status-text"),
@@ -556,17 +557,17 @@
   // for "not yet answered"). Shared between renderTrial() (restoring a
   // stored rating) and the slider's own "input" handler (live dragging).
   function updateLikertDisplay(group, value) {
-    const slider = group.querySelector(".likert-slider");
+    const buttons = group.querySelectorAll(".likert-btn");
     const valueEl = group.querySelector(".likert-value");
     const question = group.dataset.question;
+    buttons.forEach((btn) => {
+      btn.classList.toggle("selected", Number(btn.dataset.value) === value);
+      btn.setAttribute("aria-pressed", Number(btn.dataset.value) === value ? "true" : "false");
+    });
     if (value === null) {
-      slider.value = "3";
-      slider.classList.remove("touched");
       valueEl.textContent = valueEl.dataset.placeholder;
       valueEl.style.color = "";
     } else {
-      slider.value = String(value);
-      slider.classList.add("touched");
       valueEl.textContent = `${value} — ${LIKERT_LABELS[question][value - 1]}`;
       valueEl.style.color = RATING_COLORS[value - 1];
     }
@@ -618,23 +619,53 @@
     );
   }
 
+  const POSITION_LABEL = { a: "Option A", b: "Option B", c: "Option C" };
+
+  // Lists what's still missing, in on-screen order — a disabled Next
+  // button alone gives no clue which of the six sliders (two per video)
+  // or the ranking is the one still unanswered, especially since an
+  // untouched slider's thumb sits at the same visual midpoint as a real
+  // "3" rating (see updateLikertDisplay()'s `.touched` class).
+  function missingItems(trial) {
+    const items = [];
+    ["a", "b", "c"].forEach((pos) => {
+      if (trial.ratings[pos].success === null) items.push(`${POSITION_LABEL[pos]} — edit success`);
+      if (trial.ratings[pos].naturalness === null) items.push(`${POSITION_LABEL[pos]} — motion naturalness`);
+    });
+    if (effectiveRanking(trial).length < 3) items.push("full ranking (tap two videos above)");
+    return items;
+  }
+
   function updateNextEnabled() {
     const trial = currentTrial();
     const ready = allRated(trial) && effectiveRanking(trial).length === 3;
     // DEBUG-ONLY: revert to `el.btnNext.disabled = !ready;` before release
     el.btnNext.disabled = !debugMode && !ready;
+
+    if (el.nextHint) {
+      // DEBUG-ONLY: revert to `if (!ready) {` before release — debug view
+      // already bypasses the requirement, so the hint would otherwise
+      // nag about answers debug mode doesn't need yet.
+      if (!debugMode && !ready) {
+        el.nextHint.textContent = `Still needed: ${missingItems(trial).join(", ")}.`;
+        el.nextHint.hidden = false;
+      } else {
+        el.nextHint.hidden = true;
+      }
+    }
   }
 
   el.likertGroups.forEach((group) => {
     const pos = group.dataset.video;
     const question = group.dataset.question;
-    const slider = group.querySelector(".likert-slider");
-    slider.addEventListener("input", () => {
-      const value = Number(slider.value);
-      currentTrial().ratings[pos][question] = value;
-      updateLikertDisplay(group, value);
-      updateNextEnabled();
-      saveState();
+    group.querySelectorAll(".likert-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const value = Number(btn.dataset.value);
+        currentTrial().ratings[pos][question] = value;
+        updateLikertDisplay(group, value);
+        updateNextEnabled();
+        saveState();
+      });
     });
   });
 

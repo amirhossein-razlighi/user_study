@@ -25,12 +25,16 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 - **Ratings instead of a checkbox.** Each video gets two 1–5 Likert
   ratings — **edit success** ("how well does it perform the edit?") and
   **motion naturalness** — instead of the main study's binary "task
-  accomplished" checkbox. Each rating is a slider (`.likert-slider`) with
-  a red (1, worst) → green (5, best) gradient track; the thumb starts
-  ghosted at the midpoint (not a real "3") until the participant actually
-  drags it — `updateLikertDisplay()` in `app.js` tracks that via a
-  `.touched` class, separate from the underlying `null` rating value, so
-  an untouched slider never gets silently submitted as a real answer.
+  accomplished" checkbox. Each rating is five discrete tap buttons
+  (`.likert-btn`, not a slider — a slider's thumb sitting at a ghosted
+  midpoint made it too easy to mistake an untouched rating for a real
+  "3", which is exactly what happened in testing), colored red (1,
+  worst) → green (5, best) once tapped; the underlying value stays
+  `null` until one is (`updateLikertDisplay()` in `app.js`), so an
+  unanswered rating never gets silently submitted as a real answer. A
+  `next-hint` banner also lists every still-missing rating/ranking by
+  name when "Next" is disabled, since six sliders (er, buttons) plus a
+  ranking is easy to lose track of otherwise.
   Then a full ranking, best to worst, via **tap-to-rank**: tap a video
   card in the "Pending" row and it drops into the next open slot
   (1st/2nd/3rd); once two are placed the third fills in automatically
