@@ -424,6 +424,104 @@ h2 {
   text-align: center;
 }
 
+/* ---------- Compare mode toggle + synced scrub bar ---------- */
+
+.compare-toolbar {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 16px;
+}
+
+.compare-mode-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.compare-mode-btn {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.compare-mode-btn.is-active {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.sync-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  margin-top: 14px;
+  box-shadow: var(--shadow);
+}
+
+.sync-play-btn {
+  appearance: none;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sync-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Safari and Firefox don't ship a UA-stylesheet `[hidden]` rule for SVG
+   the way they do for HTML elements, so the `hidden` attribute alone
+   silently fails to hide these icons on those two engines (Chrome's SVG
+   default happens to inherit it, which is why this only shows up when
+   actually cross-browser testing). Same fix as `.debug-badge[hidden]`
+   elsewhere in this file: an explicit rule beats the default. */
+.sync-icon[hidden] {
+  display: none;
+}
+
+.sync-scrub {
+  flex: 1 1 140px;
+  min-width: 0;
+  height: 28px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.sync-time {
+  flex: none;
+  min-width: 92px;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+}
+
 .options-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -531,6 +629,15 @@ h2 {
   width: 100%;
 }
 
+/* Echoes the welcome screen's criteria colors so these questions read as
+   the same "natural" / "strength" dimensions explained there. */
+.choice-fieldset[data-question="natural"] legend {
+  color: var(--accent);
+}
+.choice-fieldset[data-question="strength"] legend {
+  color: var(--strength);
+}
+
 .choice-row {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -587,6 +694,60 @@ h2 {
 
 .nav-row .btn-ghost { flex: 0 0 auto; }
 .nav-row .btn-primary { flex: 1; }
+
+/* ---------- Win-rate stats (done screen summary) ---------- */
+
+.win-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 12px 0 20px;
+}
+
+.win-stat-label {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.win-stat-bar {
+  display: flex;
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.win-stat-seg {
+  height: 100%;
+}
+
+.win-stat-ours { background: var(--success); }
+.win-stat-baseline { background: var(--strength); }
+.win-stat-tie { background: var(--text-muted); opacity: 0.5; }
+
+.win-stat-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.win-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+
+.win-dot-ours { background: var(--success); }
+.win-dot-baseline { background: var(--strength); }
+.win-dot-tie { background: var(--text-muted); opacity: 0.5; }
 
 /* ---------- Summary table (done screen) ---------- */
 

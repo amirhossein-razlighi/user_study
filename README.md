@@ -8,12 +8,24 @@ For each of 27 scenarios, a participant:
 1. Reads the one-sentence edit request and watches the original input video.
 2. Watches **Option A** and **Option B** — a baseline edit and "ours",
    shown in random order and under blinded names so participants can't
-   tell which is which.
+   tell which is which. A "Play both together" toggle (next to the default
+   "Play individually" native controls) switches to one shared play/pause
+   button and scrub bar that drives both videos in lockstep — useful for
+   dragging to a specific frame in both at once on a subtle edit. Both
+   clips are muted in that mode (see `assets/js/app.js`, `setCompareMode()`)
+   since the study only asks about motion, never audio.
 3. Checks a box under each option for "the task was accomplished in this
    video" (0/1).
-4. Picks which option is better overall, or "about the same".
+4. Answers three separate A/B/"about the same" questions: which is better
+   **overall**, which looks more **natural**, and which has the **stronger,
+   more recognizable motion**. All three are required before "Next" enables
+   (see `trialIsComplete()`).
 
 Progress is saved to `localStorage` as they go (refresh-safe / resumable).
+On the done screen, "Show a summary of my answers" also reveals a win-rate
+breakdown — Ours vs. Baseline vs. Tie, as a percentage of all scenarios,
+for each of the three questions (`computeWinRate()` in `app.js`) — visible
+only after the participant taps to expand it, never during the study.
 At the end, all 27 answers are submitted to Supabase in one request (see
 [Database](#database-supabase)); a status indicator shows saving/saved/
 failed, with automatic + manual retry and a "download results as .zip"
@@ -120,9 +132,12 @@ group by method;
 Key columns: `session_id` (groups one participant's 27 rows),
 `scenario_order`, `scenario_slug`, `edit_prompt`, `a_source`/`b_source`
 (blinded `clip1`/`clip2`), `a_role`/`b_role` (`baseline`/`ours`, decoded
-from the blinded mapping), `accomplished_a`/`accomplished_b`, `choice`
-(`A`/`B`/`tie`), `preferred_method` (`baseline`/`ours`/`tie`, already
-decoded from `choice` + the roles), `time_spent_ms`, plus session-level
+from the blinded mapping), `accomplished_a`/`accomplished_b`, and the
+three A/B/tie questions each stored as a raw choice plus its decoded
+winner: `choice`/`preferred_method` (overall), `naturalness_choice`/
+`preferred_natural`, `strength_choice`/`preferred_strength` (all
+`A`/`B`/`tie` raw, `baseline`/`ours`/`tie` decoded). Plus `time_spent_ms`
+and, at the session level,
 `session_started_at`/`session_finished_at`/`user_agent` denormalized onto
 every row for filtering without a join. `debug_mode` (default `false`)
 flags rows submitted while the frontend's debug view was on — should

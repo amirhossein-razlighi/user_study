@@ -43,7 +43,9 @@
         bSource,
         accomplishedA: false,
         accomplishedB: false,
-        choice: null, // "A" | "B" | "tie"
+        choice: null, // "A" | "B" | "tie" -- overall
+        naturalnessChoice: null, // "A" | "B" | "tie" -- which looks more natural
+        strengthChoice: null, // "A" | "B" | "tie" -- which motion is stronger/clearer
         visited: false,
         timeSpentMs: 0
       };
@@ -169,7 +171,14 @@
     checkA: document.getElementById("check-a"),
     checkB: document.getElementById("check-b"),
 
-    choiceBtns: Array.from(document.querySelectorAll(".choice-btn")),
+    modeIndividualBtn: document.getElementById("mode-individual-btn"),
+    modeTogetherBtn: document.getElementById("mode-together-btn"),
+    syncBar: document.getElementById("sync-bar"),
+    syncPlayBtn: document.getElementById("sync-play-btn"),
+    syncIconPlay: document.querySelector("#sync-play-btn .sync-icon-play"),
+    syncIconPause: document.querySelector("#sync-play-btn .sync-icon-pause"),
+    syncScrub: document.getElementById("sync-scrub"),
+    syncTime: document.getElementById("sync-time"),
 
     btnBack: document.getElementById("btn-back"),
     btnNext: document.getElementById("btn-next"),
@@ -184,6 +193,7 @@
     btnDownload: document.getElementById("btn-download"),
     btnToggleSummary: document.getElementById("btn-toggle-summary"),
     summaryWrap: document.getElementById("summary-wrap"),
+    winStats: document.getElementById("win-stats"),
     summaryTable: document.getElementById("summary-table"),
     btnRestart2: document.getElementById("btn-restart-2"),
 
@@ -192,6 +202,21 @@
     debugBadgeA: document.getElementById("debug-badge-a"),
     debugBadgeB: document.getElementById("debug-badge-b")
   };
+
+  // Each trial has three independent A/B/tie questions; a fieldset's
+  // `data-question` says which trial field its buttons write to.
+  const QUESTION_FIELD = {
+    overall: "choice",
+    natural: "naturalnessChoice",
+    strength: "strengthChoice"
+  };
+
+  const choiceGroups = Array.from(
+    document.querySelectorAll(".choice-fieldset[data-question]")
+  ).map((fieldset) => ({
+    field: QUESTION_FIELD[fieldset.dataset.question],
+    buttons: Array.from(fieldset.querySelectorAll(".choice-btn"))
+  }));
 
   let trialShownAt = 0;
 
@@ -300,6 +325,153 @@
     videoEl.load();
   }
 
+  /* ---------------- synced side-by-side playback ----------------
+   * Default is each video's own native controls ("individual"). "Together"
+   * mode hides those and drives both videos from one shared play button +
+   * scrub bar, so participants can watch them in lockstep or drag to a
+   * specific frame in both at once — useful when the edit is subtle.
+   * Video A is the sync clock: B's currentTime is nudged back in line
+   * whenever it drifts more than ~150ms, since browsers don't guarantee
+   * two independently-playing <video> elements stay frame-synced.
+   */
+
+  let compareMode = "individual"; // "individual" | "together"
+
+  function formatTime(seconds) {
+    if (!isFinite(seconds) || seconds < 0) seconds = 0;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function syncDuration() {
+    const a = el.videoA.duration;
+    const b = el.videoB.duration;
+    if (isFinite(a) && a > 0) return a;
+    if (isFinite(b) && b > 0) return b;
+    return 0;
+  }
+
+  // Toggle via setAttribute/removeAttribute, not the `.hidden` IDL property:
+  // on <svg> elements that property silently fails to reflect to the actual
+  // attribute in some engines (a real, longstanding SVG-vs-HTML DOM
+  // inconsistency), so `svgEl.hidden = true` can be a no-op. Attribute
+  // methods work correctly on every element type.
+  function setIconHidden(iconEl, isHidden) {
+    if (isHidden) iconEl.setAttribute("hidden", "");
+    else iconEl.removeAttribute("hidden");
+  }
+
+  function setSyncPlaying(playing) {
+    el.syncPlayBtn.setAttribute("aria-label", playing ? "Pause both videos" : "Play both videos");
+    setIconHidden(el.syncIconPlay, playing);
+    setIconHidden(el.syncIconPause, !playing);
+  }
+
+  function updateSyncScrubFromVideoA() {
+    if (compareMode !== "together") return;
+    const duration = syncDuration();
+    const fraction = duration > 0 ? el.videoA.currentTime / duration : 0;
+    el.syncScrub.value = String(Math.round(fraction * 1000));
+    el.syncTime.textContent = `${formatTime(el.videoA.currentTime)} / ${formatTime(duration)}`;
+    const durationB = isFinite(el.videoB.duration) ? el.videoB.duration : duration;
+    const targetB = fraction * durationB;
+    if (Math.abs(el.videoB.currentTime - targetB) > 0.15) {
+      el.videoB.currentTime = targetB;
+    }
+  }
+
+  function seekBothTo(fraction) {
+    const durationA = isFinite(el.videoA.duration) ? el.videoA.duration : 0;
+    const durationB = isFinite(el.videoB.duration) ? el.videoB.duration : 0;
+    el.videoA.currentTime = fraction * durationA;
+    el.videoB.currentTime = fraction * durationB;
+    el.syncTime.textContent = `${formatTime(fraction * durationA)} / ${formatTime(syncDuration())}`;
+  }
+
+  function resetSyncBarForNewTrial() {
+    el.videoA.pause();
+    el.videoB.pause();
+    setSyncPlaying(false);
+    el.syncScrub.value = "0";
+    el.syncTime.textContent = "0:00 / 0:00";
+    el.videoA.controls = compareMode === "individual";
+    el.videoB.controls = compareMode === "individual";
+    el.videoA.muted = compareMode === "together";
+    el.videoB.muted = compareMode === "together";
+  }
+
+  // Safe wrapper: play() returns a promise that can reject (autoplay
+  // policy, media not ready yet) — every engine surfaces that a little
+  // differently, so swallow it rather than let it surface as an unhandled
+  // rejection in the console.
+  function safePlay(videoEl) {
+    const p = videoEl.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  }
+
+  function setCompareMode(mode) {
+    compareMode = mode;
+    const together = mode === "together";
+    el.modeIndividualBtn.classList.toggle("is-active", !together);
+    el.modeTogetherBtn.classList.toggle("is-active", together);
+    el.modeIndividualBtn.setAttribute("aria-selected", together ? "false" : "true");
+    el.modeTogetherBtn.setAttribute("aria-selected", together ? "true" : "false");
+    el.syncBar.hidden = !together;
+    el.videoA.pause();
+    el.videoB.pause();
+    setSyncPlaying(false);
+    el.videoA.controls = !together;
+    el.videoB.controls = !together;
+    // Two clips playing at once would otherwise overlap their audio into
+    // noise — muted in "together" mode since the study only asks
+    // participants to judge motion, never audio (see the welcome screen's
+    // audio note). Individual mode keeps native controls, unmuted as before.
+    el.videoA.muted = together;
+    el.videoB.muted = together;
+    if (together) {
+      el.syncScrub.value = "0";
+      updateSyncScrubFromVideoA();
+    }
+  }
+
+  el.modeIndividualBtn.addEventListener("click", () => setCompareMode("individual"));
+  el.modeTogetherBtn.addEventListener("click", () => setCompareMode("together"));
+
+  el.syncPlayBtn.addEventListener("click", () => {
+    if (el.videoA.paused) {
+      safePlay(el.videoA);
+      safePlay(el.videoB);
+      setSyncPlaying(true);
+    } else {
+      el.videoA.pause();
+      el.videoB.pause();
+      setSyncPlaying(false);
+    }
+  });
+
+  el.syncScrub.addEventListener("input", () => {
+    el.videoA.pause();
+    el.videoB.pause();
+    setSyncPlaying(false);
+    seekBothTo(Number(el.syncScrub.value) / 1000);
+  });
+
+  el.videoA.addEventListener("timeupdate", updateSyncScrubFromVideoA);
+  el.videoA.addEventListener("loadedmetadata", updateSyncScrubFromVideoA);
+  // Only "ended" here, not "pause": with native controls hidden in
+  // together mode, playback ending on its own is the only way A can stop
+  // outside of our own play/pause button — and a video's "pause" event is
+  // fired via a queued task (not synchronously), so listening for it here
+  // risked catching our *own* setCompareMode()-triggered pause() after a
+  // later play(), clobbering the play button's state right after a click.
+  el.videoA.addEventListener("ended", () => {
+    if (compareMode === "together") {
+      el.videoB.pause();
+      setSyncPlaying(false);
+    }
+  });
+
   function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -336,11 +508,12 @@
     setVideoSource(el.videoInput, scenario.slug, "input");
     setVideoSource(el.videoA, scenario.slug, trial.aSource);
     setVideoSource(el.videoB, scenario.slug, trial.bSource);
+    resetSyncBarForNewTrial();
 
     el.checkA.checked = !!trial.accomplishedA;
     el.checkB.checked = !!trial.accomplishedB;
 
-    setChoiceUI(trial.choice);
+    setChoiceUI(trial);
 
     // DEBUG-ONLY: delete this block before release
     if (el.debugBadgeA && el.debugBadgeB) {
@@ -360,17 +533,26 @@
     trialShownAt = performance.now();
   }
 
-  function setChoiceUI(choice) {
-    el.choiceBtns.forEach((btn) => {
-      const selected = btn.dataset.choice === choice;
-      btn.classList.toggle("selected", selected);
-      btn.setAttribute("aria-pressed", selected ? "true" : "false");
+  function setChoiceUI(trial) {
+    choiceGroups.forEach((group) => {
+      const value = trial[group.field];
+      group.buttons.forEach((btn) => {
+        const selected = btn.dataset.choice === value;
+        btn.classList.toggle("selected", selected);
+        btn.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
     });
   }
 
+  // All three A/B/tie questions (overall, naturalness, strength) must be
+  // answered, not just the overall one.
+  function trialIsComplete(trial) {
+    return !!(trial.choice && trial.naturalnessChoice && trial.strengthChoice);
+  }
+
   function updateNextEnabled() {
-    // DEBUG-ONLY: revert to `el.btnNext.disabled = !currentTrial().choice;` before release
-    el.btnNext.disabled = !debugMode && !currentTrial().choice;
+    // DEBUG-ONLY: revert to `el.btnNext.disabled = !trialIsComplete(currentTrial());` before release
+    el.btnNext.disabled = !debugMode && !trialIsComplete(currentTrial());
   }
 
   el.checkA.addEventListener("change", () => {
@@ -383,12 +565,14 @@
     saveState();
   });
 
-  el.choiceBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      currentTrial().choice = btn.dataset.choice;
-      setChoiceUI(btn.dataset.choice);
-      updateNextEnabled();
-      saveState();
+  choiceGroups.forEach((group) => {
+    group.buttons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        currentTrial()[group.field] = btn.dataset.choice;
+        setChoiceUI(currentTrial());
+        updateNextEnabled();
+        saveState();
+      });
     });
   });
 
@@ -404,8 +588,8 @@
   }
 
   el.btnNext.addEventListener("click", () => {
-    // DEBUG-ONLY: revert to `if (!currentTrial().choice) return;` before release
-    if (!debugMode && !currentTrial().choice) return;
+    // DEBUG-ONLY: revert to `if (!trialIsComplete(currentTrial())) return;` before release
+    if (!debugMode && !trialIsComplete(currentTrial())) return;
     recordTimeSpent();
     pauseAllVideos();
     if (state.currentIndex < state.trials.length - 1) {
@@ -458,14 +642,21 @@
     }
   }
 
-  // aRole/bRole/preferredMethod are derived the same way for both the
-  // downloadable export and the DB submission — keep them in sync here.
+  // aRole/bRole/preferredMethod (and the naturalness/strength equivalents)
+  // are derived the same way for both the downloadable export and the DB
+  // submission — keep them in sync here.
   function computeTrialRoles(trial, scenario) {
     const aRole = trial.aSource === scenario.baselineClip ? "baseline" : "ours";
     const bRole = trial.bSource === scenario.baselineClip ? "baseline" : "ours";
-    const preferredMethod =
-      trial.choice === "tie" ? "tie" : trial.choice === "A" ? aRole : bRole;
-    return { aRole, bRole, preferredMethod };
+    const decode = (choice) =>
+      choice === "tie" ? "tie" : choice === "A" ? aRole : bRole;
+    return {
+      aRole,
+      bRole,
+      preferredMethod: decode(trial.choice),
+      preferredNatural: decode(trial.naturalnessChoice),
+      preferredStrength: decode(trial.strengthChoice)
+    };
   }
 
   function buildExportPayload() {
@@ -480,7 +671,8 @@
       userAgent: navigator.userAgent,
       responses: state.trials.map((trial, i) => {
         const scenario = SCENARIOS.find((s) => s.slug === trial.slug);
-        const { aRole, bRole, preferredMethod } = computeTrialRoles(trial, scenario);
+        const { aRole, bRole, preferredMethod, preferredNatural, preferredStrength } =
+          computeTrialRoles(trial, scenario);
         return {
           order: i + 1,
           slug: trial.slug,
@@ -493,6 +685,10 @@
           accomplishedB: trial.accomplishedB ? 1 : 0,
           choice: trial.choice,
           preferredMethod,
+          naturalnessChoice: trial.naturalnessChoice,
+          preferredNatural,
+          strengthChoice: trial.strengthChoice,
+          preferredStrength,
           timeSpentMs: trial.timeSpentMs
         };
       })
@@ -505,7 +701,8 @@
   function buildSubmissionRows() {
     return state.trials.map((trial, i) => {
       const scenario = SCENARIOS.find((s) => s.slug === trial.slug);
-      const { aRole, bRole, preferredMethod } = computeTrialRoles(trial, scenario);
+      const { aRole, bRole, preferredMethod, preferredNatural, preferredStrength } =
+        computeTrialRoles(trial, scenario);
       return {
         session_id: state.sessionId,
         device_id: DEVICE_ID,
@@ -523,6 +720,10 @@
         accomplished_b: !!trial.accomplishedB,
         choice: trial.choice,
         preferred_method: preferredMethod,
+        naturalness_choice: trial.naturalnessChoice,
+        preferred_natural: preferredNatural,
+        strength_choice: trial.strengthChoice,
+        preferred_strength: preferredStrength,
         time_spent_ms: trial.timeSpentMs,
         session_started_at: state.startedAt,
         session_finished_at: state.finishedAt,
@@ -544,7 +745,7 @@
   // resulting 400 as a generic "couldn't save" error.
   function firstIncompleteTrialIndex() {
     for (let i = 0; i < state.trials.length; i++) {
-      if (!state.trials[i].choice) return i;
+      if (!trialIsComplete(state.trials[i])) return i;
     }
     return -1;
   }
@@ -680,14 +881,58 @@
     el.btnToggleSummary.textContent = hidden ? "Hide summary" : "Show a summary of my answers";
   });
 
+  // Counts how often each field ("baseline" | "ours" | "tie") won across
+  // all responses, as percentages of the total. Purely a personal recap
+  // shown on-demand after the study is finished — never seen mid-study,
+  // so it can't bias later answers.
+  function computeWinRate(responses, field) {
+    const total = responses.length;
+    const ours = responses.filter((r) => r[field] === "ours").length;
+    const baseline = responses.filter((r) => r[field] === "baseline").length;
+    const tie = total - ours - baseline;
+    const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
+    return { oursPct: pct(ours), baselinePct: pct(baseline), tiePct: pct(tie) };
+  }
+
+  function renderWinStats(payload) {
+    const rows = [
+      { label: "Overall winner", field: "preferredMethod" },
+      { label: "More natural motion", field: "preferredNatural" },
+      { label: "Stronger motion", field: "preferredStrength" }
+    ];
+    el.winStats.innerHTML = rows
+      .map(({ label, field }) => {
+        const { oursPct, baselinePct, tiePct } = computeWinRate(payload.responses, field);
+        return `
+          <div class="win-stat">
+            <p class="win-stat-label">${label}</p>
+            <div class="win-stat-bar">
+              <span class="win-stat-seg win-stat-ours" style="width:${oursPct}%"></span>
+              <span class="win-stat-seg win-stat-baseline" style="width:${baselinePct}%"></span>
+              <span class="win-stat-seg win-stat-tie" style="width:${tiePct}%"></span>
+            </div>
+            <p class="win-stat-legend">
+              <span><i class="win-dot win-dot-ours"></i>Ours ${oursPct}%</span>
+              <span><i class="win-dot win-dot-baseline"></i>Baseline ${baselinePct}%</span>
+              <span><i class="win-dot win-dot-tie"></i>Tie ${tiePct}%</span>
+            </p>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
   function renderSummary() {
     const payload = buildExportPayload();
+    renderWinStats(payload);
     const rows = payload.responses
       .map(
         (r) => `<tr>
           <td>${r.order}</td>
           <td>${escapeHtml(r.slug)}</td>
           <td>${r.choice === "tie" ? "Tie" : r.choice}</td>
+          <td>${r.naturalnessChoice === "tie" ? "Tie" : r.naturalnessChoice}</td>
+          <td>${r.strengthChoice === "tie" ? "Tie" : r.strengthChoice}</td>
           <td>${r.accomplishedA ? "&check;" : "&mdash;"}</td>
           <td>${r.accomplishedB ? "&check;" : "&mdash;"}</td>
         </tr>`
@@ -695,7 +940,7 @@
       .join("");
     el.summaryTable.innerHTML = `
       <thead>
-        <tr><th>#</th><th>Scenario</th><th>Choice</th><th>A ok</th><th>B ok</th></tr>
+        <tr><th>#</th><th>Scenario</th><th>Overall</th><th>Natural</th><th>Stronger</th><th>A ok</th><th>B ok</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     `;

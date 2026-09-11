@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Video Editing User Study</title>
   <meta name="description" content="A short study comparing two AI video-editing methods." />
-  <link rel="stylesheet" href="assets/css/style.css?v=16" />
+  <link rel="stylesheet" href="assets/css/style.css?v=19" />
   <link rel="icon" href="data:," />
 </head>
 <body>
@@ -42,7 +42,7 @@
             <li>
               <span class="step-num">4</span>
               <div class="step-body">
-                <span>Pick the option you think is better overall, judged on:</span>
+                <span>Answer three quick A/B questions: which is better overall, which looks more natural, and which has the stronger motion. Judge these on:</span>
                 <ul class="criteria-list">
                   <li class="criterion criterion-happen">
                     <span class="criterion-icon" aria-hidden="true">&check;</span>
@@ -69,7 +69,7 @@
             Sound is included purely for reference/context &mdash; please don't judge or score a
             video based on its audio or sound quality.
           </p>
-          <p class="hint">There are <strong id="scenario-count">27</strong> scenarios. It takes about 11&ndash;17 minutes.</p>
+          <p class="hint">There are <strong id="scenario-count">27</strong> scenarios. It takes about 15&ndash;22 minutes.</p>
         </div>
 
         <div class="card">
@@ -120,6 +120,13 @@
 
         <p class="section-label compare-label">Compare the two edited versions</p>
 
+        <div class="compare-toolbar">
+          <div class="compare-mode-tabs" role="tablist" aria-label="Playback mode">
+            <button type="button" class="compare-mode-btn is-active" id="mode-individual-btn" role="tab" aria-selected="true">Play individually</button>
+            <button type="button" class="compare-mode-btn" id="mode-together-btn" role="tab" aria-selected="false">Play both together</button>
+          </div>
+        </div>
+
         <div class="options-grid">
           <div class="option-card" id="option-card-a">
             <p class="option-title">Option A <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-a" hidden></span><!-- END DEBUG-ONLY --></p>
@@ -142,8 +149,17 @@
           </div>
         </div>
 
-        <fieldset class="choice-fieldset">
-          <legend>Which one better performs the requested edit, while keeping everything else the same?</legend>
+        <div class="sync-bar" id="sync-bar" hidden>
+          <button type="button" class="sync-play-btn" id="sync-play-btn" aria-label="Play both videos">
+            <svg class="sync-icon sync-icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            <svg class="sync-icon sync-icon-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>
+          </button>
+          <input type="range" class="sync-scrub" id="sync-scrub" min="0" max="1000" value="0" step="1" aria-label="Scrub both videos together" />
+          <span class="sync-time" id="sync-time">0:00 / 0:00</span>
+        </div>
+
+        <fieldset class="choice-fieldset" data-question="overall">
+          <legend>Which one is better overall?</legend>
           <div class="choice-row" role="radiogroup">
             <button class="choice-btn" data-choice="A" type="button">
               <span class="choice-icon">&larr;</span> A is better
@@ -153,6 +169,36 @@
             </button>
             <button class="choice-btn" data-choice="B" type="button">
               B is better <span class="choice-icon">&rarr;</span>
+            </button>
+          </div>
+        </fieldset>
+
+        <fieldset class="choice-fieldset" data-question="natural">
+          <legend>Which one looks more natural in its motion?</legend>
+          <div class="choice-row" role="radiogroup">
+            <button class="choice-btn" data-choice="A" type="button">
+              <span class="choice-icon">&larr;</span> A is more natural
+            </button>
+            <button class="choice-btn choice-btn-tie" data-choice="tie" type="button">
+              About the same
+            </button>
+            <button class="choice-btn" data-choice="B" type="button">
+              B is more natural <span class="choice-icon">&rarr;</span>
+            </button>
+          </div>
+        </fieldset>
+
+        <fieldset class="choice-fieldset" data-question="strength">
+          <legend>Which one has a stronger, more clearly recognizable motion?</legend>
+          <div class="choice-row" role="radiogroup">
+            <button class="choice-btn" data-choice="A" type="button">
+              <span class="choice-icon">&larr;</span> A is stronger
+            </button>
+            <button class="choice-btn choice-btn-tie" data-choice="tie" type="button">
+              About the same
+            </button>
+            <button class="choice-btn" data-choice="B" type="button">
+              B is stronger <span class="choice-icon">&rarr;</span>
             </button>
           </div>
         </fieldset>
@@ -206,6 +252,7 @@
         <div class="card">
           <button class="link-btn" id="btn-toggle-summary">Show a summary of my answers</button>
           <div id="summary-wrap" hidden>
+            <div class="win-stats" id="win-stats"></div>
             <table class="summary-table" id="summary-table"></table>
           </div>
         </div>
@@ -218,6 +265,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="data/scenarios.js?v=17"></script>
-  <script src="assets/js/app.js?v=16"></script>
+  <script src="assets/js/app.js?v=19"></script>
 </body>
 </html>
