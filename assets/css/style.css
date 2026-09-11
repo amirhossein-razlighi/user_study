@@ -859,6 +859,15 @@ h2 {
   background: var(--warn-soft);
 }
 
+/* `.checkbox-row { display: flex }` is an author rule, so it beats the
+   browser's built-in `[hidden] { display: none }` (a lower-priority
+   user-agent rule) regardless of specificity — same issue already noted
+   below for `.debug-badge`. Without this, the `hidden` attribute on
+   .debug-toggle-row would silently do nothing. */
+.debug-toggle-row[hidden] {
+  display: none;
+}
+
 .debug-badge {
   display: inline-block;
   font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;

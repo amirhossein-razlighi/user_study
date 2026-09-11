@@ -195,6 +195,13 @@ of wasting the 3 retry attempts on a request that can never succeed.
 
 ## Debug view (temporary, remove before release)
 
+**Currently hidden** (`index.html`'s `.debug-toggle-row` has a `hidden`
+attribute) while this link is shared with an outside test group, so no
+one can turn it on by accident or otherwise. Remove `hidden` — and the
+matching `.debug-toggle-row[hidden] { display: none; }` override note in
+`assets/css/style.css` explains why that's needed, not just the HTML
+attribute — to bring it back for internal QA.
+
 The welcome screen has a "Debug view" checkbox that, while checked:
 
 - reveals which option (A/B) is the baseline vs. "ours" for every

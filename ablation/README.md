@@ -83,6 +83,11 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 
 ## Debug view (temporary, remove before release)
 
+**Currently hidden here too** (this study's own `.debug-toggle-row` in
+`index.html` also has a `hidden` attribute) while shared with an outside
+test group — same reasoning and the same shared CSS override, see the
+main study's README.
+
 Same pattern as the main study — see
 [../README.md#debug-view-temporary-remove-before-release](../README.md#debug-view-temporary-remove-before-release)
 for the general explanation, including that debug-mode completions no

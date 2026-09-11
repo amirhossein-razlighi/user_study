@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Video Editing Modality Ablation Study</title>
   <meta name="description" content="A short study comparing three video-editing guidance setups." />
-  <link rel="stylesheet" href="../assets/css/style.css?v=20" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=21" />
   <link rel="stylesheet" href="assets/css/ablation.css?v=6" />
   <link rel="icon" href="data:," />
 </head>
@@ -79,7 +79,8 @@
         </div>
 
         <!-- DEBUG-ONLY: delete this whole block before release -->
-        <label class="checkbox-row debug-toggle-row">
+        <!-- TEMP: hidden while shared with outside testers so no one can flip it on, intentionally or not. Remove `hidden` to bring it back for internal QA. -->
+        <label class="checkbox-row debug-toggle-row" hidden>
           <input type="checkbox" id="debug-toggle" />
           <span class="checkbox-box" aria-hidden="true"></span>
           <span>Debug view (reveals audio/text/both per scenario) &mdash; internal use only</span>
