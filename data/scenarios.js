@@ -130,5 +130,89 @@ const SCENARIOS = [
     scene: "a man facing the camera",
     baselineClip: "clip1",
     highlights: ["shouts loudly"]
+  },
+  {
+    slug: "gen_cat_vase",
+    edit: "The cat pushes the vase over and it shatters on the floor.",
+    scene: "a cat sitting on the floor next to a large ceramic vase",
+    baselineClip: "clip1",
+    highlights: ["pushes the vase over", "shatters"]
+  },
+  {
+    slug: "gen_firecracker",
+    edit: "The firecracker explodes with a bang and a puff of smoke.",
+    scene: "a red firecracker lying on a concrete yard with a lit fuse",
+    baselineClip: "clip1",
+    highlights: ["explodes"]
+  },
+  {
+    slug: "real_casablanca",
+    edit: "She bursts out laughing, throwing her head back.",
+    scene: "a black-and-white close-up of a woman in a hat with tearful eyes",
+    baselineClip: "clip1",
+    highlights: ["bursts out laughing", "throwing her head back"]
+  },
+  {
+    slug: "real_casablanca_hat",
+    edit: "She grabs her hat, throws it up into the air and laughs.",
+    scene: "a black-and-white close-up of a woman in a wide-brimmed hat with tearful eyes",
+    baselineClip: "clip1",
+    highlights: ["throws it up into the air", "laughs"]
+  },
+  {
+    slug: "real_keaton",
+    edit: "He bursts out laughing.",
+    scene: "a black-and-white silent-film close-up of a deadpan man in a flat straw hat",
+    baselineClip: "clip1",
+    highlights: ["bursts out laughing"]
+  },
+  {
+    slug: "real_leo_kneeslap",
+    edit: "He slaps his knee and bursts out laughing.",
+    scene: "a man in a yellow shirt sitting on a couch holding a drink",
+    baselineClip: "clip1",
+    highlights: ["slaps his knee", "bursts out laughing"]
+  },
+  {
+    slug: "gen_woman_scream",
+    edit: "The woman screams in fright.",
+    scene: "a young woman standing in a dim corridor facing the camera",
+    baselineClip: "clip1",
+    highlights: ["screams"]
+  },
+  {
+    slug: "real_michael_cry",
+    edit: "He suddenly bursts into tears, sobbing loudly, his face crumpling.",
+    scene: "a close-up of a man in a white shirt and dark tie sitting at an office desk, holding a coffee mug",
+    baselineClip: "clip1",
+    highlights: ["bursts into tears", "sobbing loudly"]
+  },
+  {
+    slug: "real_mrbean",
+    edit: "He faints and falls backwards into the field.",
+    scene: "a man in a brown suit standing in a yellow field, hands on hips",
+    baselineClip: "clip1",
+    highlights: ["faints", "falls backwards"]
+  },
+  {
+    slug: "real_tony_shout",
+    edit: "He suddenly shouts angrily at the camera, his face contorted with rage.",
+    scene: "a close-up of a heavy-set man in a patterned shirt sitting in a dim hotel room",
+    baselineClip: "clip1",
+    highlights: ["shouts angrily"]
+  },
+  {
+    slug: "gen_kettle",
+    edit: "The kettle whistles and steam shoots out of the spout.",
+    scene: "a stovetop kettle on a lit gas burner",
+    baselineClip: "clip1",
+    highlights: ["whistles", "steam shoots out"]
+  },
+  {
+    slug: "gen_tyre",
+    edit: "The tyre bursts with a loud bang and goes flat.",
+    scene: "a close-up of a parked car's front wheel",
+    baselineClip: "clip1",
+    highlights: ["bursts", "goes flat"]
   }
 ];

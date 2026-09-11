@@ -3,7 +3,7 @@
 A minimalistic, mobile-friendly A/B preference study, built as a static
 site (no server) for GitHub Pages.
 
-For each of 17 scenarios, a participant:
+For each of 29 scenarios, a participant:
 
 1. Reads the one-sentence edit request and watches the original input video.
 2. Watches **Option A** and **Option B** — a baseline edit and "ours",
@@ -14,7 +14,7 @@ For each of 17 scenarios, a participant:
 4. Picks which option is better overall, or "about the same".
 
 Progress is saved to `localStorage` as they go (refresh-safe / resumable).
-At the end, all 17 answers are submitted to Supabase in one request (see
+At the end, all 29 answers are submitted to Supabase in one request (see
 [Database](#database-supabase)); a status indicator shows saving/saved/
 failed, with automatic + manual retry and a "download results as .zip"
 fallback if it still can't get through.
@@ -94,7 +94,7 @@ sibling study followed this same pattern for its own
 `public.h3_ablation_survey_responses` table — the template to copy for any
 future study.
 
-**Shape:** one row per `(session_id, scenario)` — i.e. 17 rows per
+**Shape:** one row per `(session_id, scenario)` — i.e. 29 rows per
 completed participant, "tidy"/long format, rather than one row per session
 with everything crammed into a jsonb blob. This makes per-scenario and
 overall metrics (win rate, task-accomplishment rate, etc.) plain `GROUP BY`
@@ -117,7 +117,7 @@ from h3_main_experiment_accomplishment_by_method
 group by method;
 ```
 
-Key columns: `session_id` (groups one participant's 17 rows),
+Key columns: `session_id` (groups one participant's 29 rows),
 `scenario_order`, `scenario_slug`, `edit_prompt`, `a_source`/`b_source`
 (blinded `clip1`/`clip2`), `a_role`/`b_role` (`baseline`/`ours`, decoded
 from the blinded mapping), `accomplished_a`/`accomplished_b`, `choice`
@@ -132,7 +132,7 @@ rows during cleaning.
 **No participant IDs, but repeat submissions are still detectable.** The
 consent screen promises no personal information is collected, so there's
 no login/name/email to key on. Instead, `session_id` (a fresh id every time
-someone starts or restarts the study — groups one submission's 17 rows)
+someone starts or restarts the study — groups one submission's 29 rows)
 is paired with `device_id`: a random id generated once and kept in the
 browser's `localStorage` under its own key (`video_study_device_id_v1`,
 separate from the study-progress key, so it survives "Start over"). It
@@ -156,7 +156,7 @@ already used by the other tables in this project. Only the project's
 the Supabase SQL editor.
 
 **Submission flow** (`assets/js/app.js`, see `submitResponses()`): on the
-done screen, all 17 rows are POSTed in a single request. A status card
+done screen, all 29 rows are POSTed in a single request. A status card
 shows a spinner while in flight, a green check on success, or a red X after
 3 failed attempts (1.5s/3s backoff) — with a "Try again" button and a
 "Download results (.zip)" fallback the participant can send manually.
@@ -185,7 +185,7 @@ The welcome screen has a "Debug view" checkbox that, while checked:
 - reveals which option (A/B) is the baseline vs. "ours" for every
   scenario, as a small badge next to each "Option A"/"Option B" title
 - unlocks the "Next" button so you can click through every scenario
-  without picking A/B/tie first (handy for quickly eyeballing all 17)
+  without picking A/B/tie first (handy for quickly eyeballing all 29)
 
 It's for internal use while building the study and must not ship to real
 participants — it breaks blinding. As a safety net in case a row ever
