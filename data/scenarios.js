@@ -76,25 +76,11 @@ const SCENARIOS = [
     highlights: ["jumps out"]
   },
   {
-    slug: "gen_sealion",
-    edit: "The sea lion barks with its head raised.",
-    scene: "a sea lion resting on coastal rocks",
-    baselineClip: "clip1",
-    highlights: ["barks", "head raised"]
-  },
-  {
     slug: "gen_windmill",
     edit: "The windmill blades start turning.",
     scene: "an old wooden windmill on a hill",
     baselineClip: "clip1",
     highlights: ["blades", "turning"]
-  },
-  {
-    slug: "gen_wolf_hill",
-    edit: "The wolf howls with its head tilted up.",
-    scene: "a grey wolf standing on a snowy hill",
-    baselineClip: "clip1",
-    highlights: ["howls", "head tilted up"]
   },
   {
     slug: "gen_woman_desk",
@@ -143,7 +129,7 @@ const SCENARIOS = [
     edit: "The firecracker explodes with a bang and a puff of smoke.",
     scene: "a red firecracker lying on a concrete yard with a lit fuse",
     baselineClip: "clip1",
-    highlights: ["explodes"]
+    highlights: ["explodes", "bang"]
   },
   {
     slug: "real_casablanca",
