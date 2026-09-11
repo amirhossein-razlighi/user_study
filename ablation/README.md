@@ -41,6 +41,16 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
   `trial.rankingManual` (explicit taps) and `effectiveRanking()` (that
   plus the auto-completed 3rd) are kept separate so undoing a tap always
   has an unambiguous effect.
+- **"Play all together" mode**, extended to three videos (see the main
+  study's README for the two-video version — same architecture: video A
+  is the sync clock, B and C are corrected back into line past ~150ms of
+  drift, all three muted while in this mode since the study never judges
+  audio). Done screen's summary also gained a win-stats section: % of
+  scenarios each method (audio-only/text-only/both) was ranked #1, plus
+  its average edit-success and motion-naturalness rating, pooled across
+  whichever on-screen position it happened to be shown at
+  (`computeBestPickPct()`/`computeMethodAverages()` in `app.js`) — shown
+  only if the participant taps to expand the summary.
 - **Own Supabase table**: `public.h3_ablation_survey_responses`, plus two
   helper views — `h3_ablation_ratings_by_method` (long-format: one row
   per session/scenario/method, with a `rank` 1–3 column, so
@@ -71,8 +81,12 @@ Live at `https://amirhossein-razlighi.github.io/user_study/ablation/`.
 
 Same pattern as the main study — see
 [../README.md#debug-view-temporary-remove-before-release](../README.md#debug-view-temporary-remove-before-release)
-for the general explanation. Run `grep -rn "DEBUG-ONLY" ablation/` to find
-every spot in this sub-study before release.
+for the general explanation, including that debug-mode completions no
+longer auto-submit: the done screen shows "You're in debug mode — still
+submit responses?" instead, requiring an explicit tap
+(`state.debugMode`/the `"debug-confirm"` submit-status branch in
+`app.js`). Run `grep -rn "DEBUG-ONLY" ablation/` to find every spot in
+this sub-study before release.
 
 ## Adding more scenarios
 

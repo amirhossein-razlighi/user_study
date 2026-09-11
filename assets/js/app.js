@@ -197,10 +197,11 @@
     summaryTable: document.getElementById("summary-table"),
     btnRestart2: document.getElementById("btn-restart-2"),
 
-    // DEBUG-ONLY: delete these three lines before release
+    // DEBUG-ONLY: delete these four lines before release
     debugToggle: document.getElementById("debug-toggle"),
     debugBadgeA: document.getElementById("debug-badge-a"),
-    debugBadgeB: document.getElementById("debug-badge-b")
+    debugBadgeB: document.getElementById("debug-badge-b"),
+    btnDebugSubmit: document.getElementById("btn-debug-submit")
   };
 
   // Each trial has three independent A/B/tie questions; a fieldset's
@@ -258,7 +259,19 @@
     saveState();
     showScreen("done");
     renderSummary();
-    submitResponses();
+    // DEBUG-ONLY: revert to the plain `submitResponses()` call below
+    // before release — `state.debugMode` (persisted at finishStudy(), see
+    // there) is what the *original* session was answered in, since the
+    // in-memory `debugMode` flag below always starts false on a fresh
+    // page load, before the welcome screen's checkbox could ever be
+    // touched again.
+    debugMode = !!state.debugMode;
+    if (debugMode) {
+      setSubmitState("debug-confirm");
+    } else {
+      submitResponses();
+    }
+    // END DEBUG-ONLY
   } else if (hasResumable) {
     const answeredCount = savedState.trials.filter((t) => t.choice).length;
 
@@ -632,11 +645,24 @@
 
   function finishStudy() {
     state.finishedAt = new Date().toISOString();
+    // DEBUG-ONLY: delete this line before release — lets a later reload
+    // (before an unsubmitted debug session is ever confirmed) still know
+    // it was answered in debug mode; see the `hasUnsubmittedFinished`
+    // branch above.
+    state.debugMode = debugMode;
+    // END DEBUG-ONLY
     saveState();
     showScreen("done");
     renderSummary();
     if (state.submitted) {
       setSubmitState("success");
+    } else if (debugMode) {
+      // DEBUG-ONLY: revert to the plain `submitResponses()` call below
+      // before release — debug-mode rows would otherwise silently pollute
+      // real data, so require an explicit opt-in click instead of
+      // auto-submitting like a normal run does.
+      setSubmitState("debug-confirm");
+      // END DEBUG-ONLY
     } else {
       submitResponses();
     }
@@ -769,6 +795,7 @@
       el.submitActions.hidden = false;
       el.btnRetrySubmit.hidden = false;
       el.btnGoToIncomplete.hidden = true;
+      if (el.btnDebugSubmit) el.btnDebugSubmit.hidden = true; // DEBUG-ONLY
       el.downloadHint.textContent =
         "Please download this file and send it to the study organizer.";
       el.btnDownload.classList.remove("btn-ghost");
@@ -779,6 +806,16 @@
       el.submitActions.hidden = false;
       el.btnRetrySubmit.hidden = true;
       el.btnGoToIncomplete.hidden = false;
+      if (el.btnDebugSubmit) el.btnDebugSubmit.hidden = true; // DEBUG-ONLY
+    } else if (nextState === "debug-confirm") {
+      // DEBUG-ONLY: delete this whole branch before release
+      el.submitStatusText.textContent =
+        "Debug mode is on — responses are not saved automatically.";
+      el.submitActions.hidden = false;
+      el.btnRetrySubmit.hidden = true;
+      el.btnGoToIncomplete.hidden = true;
+      if (el.btnDebugSubmit) el.btnDebugSubmit.hidden = false;
+      // END DEBUG-ONLY
     }
   }
 
@@ -845,6 +882,12 @@
       renderTrial();
     });
   }
+
+  // DEBUG-ONLY: delete this whole block before release
+  if (el.btnDebugSubmit) {
+    el.btnDebugSubmit.addEventListener("click", () => submitResponses());
+  }
+  // END DEBUG-ONLY
 
   function triggerBlobDownload(blob, filename) {
     const url = URL.createObjectURL(blob);

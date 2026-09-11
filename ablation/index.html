@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Video Editing Modality Ablation Study</title>
   <meta name="description" content="A short study comparing three video-editing guidance setups." />
-  <link rel="stylesheet" href="../assets/css/style.css?v=15" />
-  <link rel="stylesheet" href="assets/css/ablation.css?v=3" />
+  <link rel="stylesheet" href="../assets/css/style.css?v=19" />
+  <link rel="stylesheet" href="assets/css/ablation.css?v=4" />
   <link rel="icon" href="data:," />
 </head>
 <body>
@@ -115,6 +115,13 @@
 
         <p class="section-label compare-label">Rate the three edited versions</p>
 
+        <div class="compare-toolbar">
+          <div class="compare-mode-tabs" role="tablist" aria-label="Playback mode">
+            <button type="button" class="compare-mode-btn is-active" id="mode-individual-btn" role="tab" aria-selected="true">Play individually</button>
+            <button type="button" class="compare-mode-btn" id="mode-together-btn" role="tab" aria-selected="false">Play all together</button>
+          </div>
+        </div>
+
         <div class="options-grid-3">
           <div class="option-card" id="option-card-a">
             <p class="option-title">Option A <!-- DEBUG-ONLY: delete this span before release --><span class="debug-badge" id="debug-badge-a" hidden></span><!-- END DEBUG-ONLY --></p>
@@ -180,6 +187,15 @@
           </div>
         </div>
 
+        <div class="sync-bar" id="sync-bar" hidden>
+          <button type="button" class="sync-play-btn" id="sync-play-btn" aria-label="Play all three videos">
+            <svg class="sync-icon sync-icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
+            <svg class="sync-icon sync-icon-pause" viewBox="0 0 24 24" aria-hidden="true" hidden><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>
+          </button>
+          <input type="range" class="sync-scrub" id="sync-scrub" min="0" max="1000" value="0" step="1" aria-label="Scrub all three videos together" />
+          <span class="sync-time" id="sync-time">0:00 / 0:00</span>
+        </div>
+
         <fieldset class="choice-fieldset rank-fieldset">
           <legend>Rank the three videos from best to worst</legend>
 
@@ -243,6 +259,9 @@
           <div class="submit-actions" id="submit-actions" hidden>
             <button class="btn btn-ghost" id="btn-retry-submit">Try again</button>
             <button class="btn btn-primary" id="btn-go-to-incomplete" hidden>Go back and answer</button>
+            <!-- DEBUG-ONLY: delete this button before release -->
+            <button class="btn btn-primary" id="btn-debug-submit" hidden>You're in debug mode &mdash; still submit responses?</button>
+            <!-- END DEBUG-ONLY -->
           </div>
         </div>
 
@@ -257,6 +276,7 @@
         <div class="card">
           <button class="link-btn" id="btn-toggle-summary">Show a summary of my answers</button>
           <div id="summary-wrap" hidden>
+            <div class="win-stats" id="win-stats"></div>
             <table class="summary-table" id="summary-table"></table>
           </div>
         </div>
@@ -269,6 +289,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="data/scenarios.js?v=5"></script>
-  <script src="assets/js/app.js?v=4"></script>
+  <script src="assets/js/app.js?v=5"></script>
 </body>
 </html>

@@ -201,6 +201,13 @@ The welcome screen has a "Debug view" checkbox that, while checked:
   scenario, as a small badge next to each "Option A"/"Option B" title
 - unlocks the "Next" button so you can click through every scenario
   without picking A/B/tie first (handy for quickly eyeballing all 27)
+- skips the automatic DB submission on the done screen — instead of
+  saving right away like a normal run, it shows "You're in debug mode —
+  still submit responses?" and waits for an explicit tap
+  (`finishStudy()`'s `debugMode` branch, and the `"debug-confirm"` state
+  in `setSubmitState()`). `state.debugMode` is persisted at that point so
+  a reload before confirming still remembers the session was answered in
+  debug mode, rather than silently falling back to auto-submit.
 
 It's for internal use while building the study and must not ship to real
 participants — it breaks blinding. As a safety net in case a row ever

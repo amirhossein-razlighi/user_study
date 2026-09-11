@@ -316,3 +316,57 @@
   margin-top: 12px;
   font-size: 12px;
 }
+
+/* ---------- Win-rate stats (done screen summary) ----------
+   Reuses the shared .win-stats/.win-stat/.win-stat-bar/.win-dot
+   components from ../../assets/css/style.css, just with method colors
+   (audio-only/text-only/both — fixed globally by CLIP_METHOD, not tied
+   to on-screen A/B/C position) instead of ours/baseline/tie. Reusing the
+   same three hues as the A/B/C rank chips above purely for a consistent
+   palette across the page — the meaning here is unrelated to position. */
+
+.win-stat-seg-audio, .win-dot-audio { background: var(--chip-a); }
+.win-stat-seg-text, .win-dot-text { background: var(--chip-b); }
+.win-stat-seg-both, .win-dot-both { background: var(--chip-c); }
+
+.win-rating-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.win-rating-row {
+  display: grid;
+  grid-template-columns: 84px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.win-rating-name {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.win-rating-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.win-rating-fill {
+  display: block;
+  height: 100%;
+}
+
+.win-rating-value {
+  text-align: right;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

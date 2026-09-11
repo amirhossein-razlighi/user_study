@@ -871,4 +871,8 @@ h2 {
   display: none;
 }
 
+.submit-status[data-state="debug-confirm"] .spinner { display: none; }
+.submit-status[data-state="debug-confirm"] .status-icon-info { display: block; }
+.submit-status[data-state="debug-confirm"] .submit-status-text { color: var(--accent); }
+
 /* ================ END DEBUG-ONLY ================ */

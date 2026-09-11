@@ -198,6 +198,15 @@
     rankChips: Array.from(document.querySelectorAll(".rank-chip")),
     rankSlots: Array.from(document.querySelectorAll(".rank-slot")),
 
+    modeIndividualBtn: document.getElementById("mode-individual-btn"),
+    modeTogetherBtn: document.getElementById("mode-together-btn"),
+    syncBar: document.getElementById("sync-bar"),
+    syncPlayBtn: document.getElementById("sync-play-btn"),
+    syncIconPlay: document.querySelector("#sync-play-btn .sync-icon-play"),
+    syncIconPause: document.querySelector("#sync-play-btn .sync-icon-pause"),
+    syncScrub: document.getElementById("sync-scrub"),
+    syncTime: document.getElementById("sync-time"),
+
     btnBack: document.getElementById("btn-back"),
     btnNext: document.getElementById("btn-next"),
 
@@ -211,14 +220,16 @@
     btnDownload: document.getElementById("btn-download"),
     btnToggleSummary: document.getElementById("btn-toggle-summary"),
     summaryWrap: document.getElementById("summary-wrap"),
+    winStats: document.getElementById("win-stats"),
     summaryTable: document.getElementById("summary-table"),
     btnRestart2: document.getElementById("btn-restart-2"),
 
-    // DEBUG-ONLY: delete these four lines before release
+    // DEBUG-ONLY: delete these five lines before release
     debugToggle: document.getElementById("debug-toggle"),
     debugBadgeA: document.getElementById("debug-badge-a"),
     debugBadgeB: document.getElementById("debug-badge-b"),
-    debugBadgeC: document.getElementById("debug-badge-c")
+    debugBadgeC: document.getElementById("debug-badge-c"),
+    btnDebugSubmit: document.getElementById("btn-debug-submit")
   };
 
   let trialShownAt = 0;
@@ -256,7 +267,19 @@
     saveState();
     showScreen("done");
     renderSummary();
-    submitResponses();
+    // DEBUG-ONLY: revert to the plain `submitResponses()` call below
+    // before release — `state.debugMode` (persisted at finishStudy(), see
+    // there) is what the *original* session was answered in, since the
+    // in-memory `debugMode` flag below always starts false on a fresh
+    // page load, before the welcome screen's checkbox could ever be
+    // touched again.
+    debugMode = !!state.debugMode;
+    if (debugMode) {
+      setSubmitState("debug-confirm");
+    } else {
+      submitResponses();
+    }
+    // END DEBUG-ONLY
   } else if (hasResumable) {
     const answeredCount = savedState.trials.filter((t) => t.rankingManual.length >= 2).length;
 
@@ -319,6 +342,149 @@
     videoEl.load();
   }
 
+  /* ---------------- synced side-by-side playback ----------------
+   * Same pattern as the main study's app.js, extended to three videos.
+   * Video A is the sync clock; B and C are nudged back in line whenever
+   * either drifts more than ~150ms, since browsers don't guarantee
+   * independently-playing <video> elements stay frame-synced.
+   */
+
+  let compareMode = "individual"; // "individual" | "together"
+
+  function syncVideos() {
+    return [el.videoA, el.videoB, el.videoC];
+  }
+
+  function formatTime(seconds) {
+    if (!isFinite(seconds) || seconds < 0) seconds = 0;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${String(s).padStart(2, "0")}`;
+  }
+
+  function syncDuration() {
+    for (const v of syncVideos()) {
+      if (isFinite(v.duration) && v.duration > 0) return v.duration;
+    }
+    return 0;
+  }
+
+  // Toggle via setAttribute/removeAttribute, not the `.hidden` IDL property:
+  // on <svg> elements that property silently fails to reflect to the actual
+  // attribute in some engines (a real, longstanding SVG-vs-HTML DOM
+  // inconsistency), so `svgEl.hidden = true` can be a no-op. Attribute
+  // methods work correctly on every element type.
+  function setIconHidden(iconEl, isHidden) {
+    if (isHidden) iconEl.setAttribute("hidden", "");
+    else iconEl.removeAttribute("hidden");
+  }
+
+  function setSyncPlaying(playing) {
+    el.syncPlayBtn.setAttribute("aria-label", playing ? "Pause all videos" : "Play all three videos");
+    setIconHidden(el.syncIconPlay, playing);
+    setIconHidden(el.syncIconPause, !playing);
+  }
+
+  function updateSyncScrubFromVideoA() {
+    if (compareMode !== "together") return;
+    const duration = syncDuration();
+    const fraction = duration > 0 ? el.videoA.currentTime / duration : 0;
+    el.syncScrub.value = String(Math.round(fraction * 1000));
+    el.syncTime.textContent = `${formatTime(el.videoA.currentTime)} / ${formatTime(duration)}`;
+    [el.videoB, el.videoC].forEach((v) => {
+      const vDuration = isFinite(v.duration) ? v.duration : duration;
+      const target = fraction * vDuration;
+      if (Math.abs(v.currentTime - target) > 0.15) v.currentTime = target;
+    });
+  }
+
+  function seekAllTo(fraction) {
+    const durationA = isFinite(el.videoA.duration) ? el.videoA.duration : 0;
+    syncVideos().forEach((v) => {
+      const vDuration = isFinite(v.duration) ? v.duration : 0;
+      v.currentTime = fraction * vDuration;
+    });
+    el.syncTime.textContent = `${formatTime(fraction * durationA)} / ${formatTime(syncDuration())}`;
+  }
+
+  function resetSyncBarForNewTrial() {
+    syncVideos().forEach((v) => v.pause());
+    setSyncPlaying(false);
+    el.syncScrub.value = "0";
+    el.syncTime.textContent = "0:00 / 0:00";
+    syncVideos().forEach((v) => {
+      v.controls = compareMode === "individual";
+      v.muted = compareMode === "together";
+    });
+  }
+
+  // Safe wrapper: play() returns a promise that can reject (autoplay
+  // policy, media not ready yet) — every engine surfaces that a little
+  // differently, so swallow it rather than let it surface as an unhandled
+  // rejection in the console.
+  function safePlay(videoEl) {
+    const p = videoEl.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+  }
+
+  function setCompareMode(mode) {
+    compareMode = mode;
+    const together = mode === "together";
+    el.modeIndividualBtn.classList.toggle("is-active", !together);
+    el.modeTogetherBtn.classList.toggle("is-active", together);
+    el.modeIndividualBtn.setAttribute("aria-selected", together ? "false" : "true");
+    el.modeTogetherBtn.setAttribute("aria-selected", together ? "true" : "false");
+    el.syncBar.hidden = !together;
+    syncVideos().forEach((v) => v.pause());
+    setSyncPlaying(false);
+    // Two other clips playing at once would otherwise overlap their audio
+    // into noise — muted in "together" mode since the study only judges
+    // motion, never audio (see the welcome screen's audio note).
+    syncVideos().forEach((v) => {
+      v.controls = !together;
+      v.muted = together;
+    });
+    if (together) {
+      el.syncScrub.value = "0";
+      updateSyncScrubFromVideoA();
+    }
+  }
+
+  el.modeIndividualBtn.addEventListener("click", () => setCompareMode("individual"));
+  el.modeTogetherBtn.addEventListener("click", () => setCompareMode("together"));
+
+  el.syncPlayBtn.addEventListener("click", () => {
+    if (el.videoA.paused) {
+      syncVideos().forEach(safePlay);
+      setSyncPlaying(true);
+    } else {
+      syncVideos().forEach((v) => v.pause());
+      setSyncPlaying(false);
+    }
+  });
+
+  el.syncScrub.addEventListener("input", () => {
+    syncVideos().forEach((v) => v.pause());
+    setSyncPlaying(false);
+    seekAllTo(Number(el.syncScrub.value) / 1000);
+  });
+
+  el.videoA.addEventListener("timeupdate", updateSyncScrubFromVideoA);
+  el.videoA.addEventListener("loadedmetadata", updateSyncScrubFromVideoA);
+  // Only "ended" here, not "pause": with native controls hidden in
+  // together mode, playback ending on its own is the only way A can stop
+  // outside of our own play/pause button — and a video's "pause" event is
+  // fired via a queued task (not synchronously), so listening for it here
+  // risked catching our *own* setCompareMode()-triggered pause() after a
+  // later play(), clobbering the play button's state right after a click.
+  el.videoA.addEventListener("ended", () => {
+    if (compareMode === "together") {
+      el.videoB.pause();
+      el.videoC.pause();
+      setSyncPlaying(false);
+    }
+  });
+
   function escapeRegExp(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
@@ -359,6 +525,7 @@
     setVideoSource(el.videoA, scenario.slug, trial.sources[0]);
     setVideoSource(el.videoB, scenario.slug, trial.sources[1]);
     setVideoSource(el.videoC, scenario.slug, trial.sources[2]);
+    resetSyncBarForNewTrial();
 
     el.likertGroups.forEach((group) => {
       const pos = group.dataset.video; // "a" | "b" | "c"
@@ -552,11 +719,24 @@
 
   function finishStudy() {
     state.finishedAt = new Date().toISOString();
+    // DEBUG-ONLY: delete this line before release — lets a later reload
+    // (before an unsubmitted debug session is ever confirmed) still know
+    // it was answered in debug mode; see the `hasUnsubmittedFinished`
+    // branch above.
+    state.debugMode = debugMode;
+    // END DEBUG-ONLY
     saveState();
     showScreen("done");
     renderSummary();
     if (state.submitted) {
       setSubmitState("success");
+    } else if (debugMode) {
+      // DEBUG-ONLY: revert to the plain `submitResponses()` call below
+      // before release — debug-mode rows would otherwise silently pollute
+      // real data, so require an explicit opt-in click instead of
+      // auto-submitting like a normal run does.
+      setSubmitState("debug-confirm");
+      // END DEBUG-ONLY
     } else {
       submitResponses();
     }
@@ -722,6 +902,7 @@
       el.submitActions.hidden = false;
       el.btnRetrySubmit.hidden = false;
       el.btnGoToIncomplete.hidden = true;
+      if (el.btnDebugSubmit) el.btnDebugSubmit.hidden = true; // DEBUG-ONLY
       el.downloadHint.textContent =
         "Please download this file and send it to the study organizer.";
       el.btnDownload.classList.remove("btn-ghost");
@@ -732,6 +913,16 @@
       el.submitActions.hidden = false;
       el.btnRetrySubmit.hidden = true;
       el.btnGoToIncomplete.hidden = false;
+      if (el.btnDebugSubmit) el.btnDebugSubmit.hidden = true; // DEBUG-ONLY
+    } else if (nextState === "debug-confirm") {
+      // DEBUG-ONLY: delete this whole branch before release
+      el.submitStatusText.textContent =
+        "Debug mode is on — responses are not saved automatically.";
+      el.submitActions.hidden = false;
+      el.btnRetrySubmit.hidden = true;
+      el.btnGoToIncomplete.hidden = true;
+      if (el.btnDebugSubmit) el.btnDebugSubmit.hidden = false;
+      // END DEBUG-ONLY
     }
   }
 
@@ -792,6 +983,12 @@
     });
   }
 
+  // DEBUG-ONLY: delete this whole block before release
+  if (el.btnDebugSubmit) {
+    el.btnDebugSubmit.addEventListener("click", () => submitResponses());
+  }
+  // END DEBUG-ONLY
+
   function triggerBlobDownload(blob, filename) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -825,8 +1022,90 @@
     el.btnToggleSummary.textContent = hidden ? "Hide summary" : "Show a summary of my answers";
   });
 
+  const METHOD_LABEL = { audio_only: "Audio-only", text_only: "Text-only", both: "Both" };
+  const METHOD_SEG_CLASS = { audio_only: "win-stat-seg-audio", text_only: "win-stat-seg-text", both: "win-stat-seg-both" };
+  const METHOD_DOT_CLASS = { audio_only: "win-dot-audio", text_only: "win-dot-text", both: "win-dot-both" };
+
+  // % of scenarios where each method was ranked #1 (best) — the ablation
+  // equivalent of the main study's "preferred method" win rate.
+  function computeBestPickPct(responses) {
+    const total = responses.length;
+    const counts = { audio_only: 0, text_only: 0, both: 0 };
+    responses.forEach((r) => {
+      if (r.firstMethod) counts[r.firstMethod]++;
+    });
+    const pct = (n) => (total ? Math.round((n / total) * 100) : 0);
+    return { audio_only: pct(counts.audio_only), text_only: pct(counts.text_only), both: pct(counts.both) };
+  }
+
+  // Average 1-5 rating per method, pooling all three on-screen positions
+  // (a/b/c) across every response — a method shows up at a different
+  // position each scenario, so this can't just read one column.
+  function computeMethodAverages(responses, field) {
+    const sums = { audio_only: 0, text_only: 0, both: 0 };
+    const counts = { audio_only: 0, text_only: 0, both: 0 };
+    responses.forEach((r) => {
+      ["a", "b", "c"].forEach((pos) => {
+        const method = r[`${pos}Method`];
+        const value = r[`${pos}${field}`];
+        if (typeof value === "number") {
+          sums[method] += value;
+          counts[method] += 1;
+        }
+      });
+    });
+    const avg = (m) => (counts[m] ? sums[m] / counts[m] : 0);
+    return { audio_only: avg("audio_only"), text_only: avg("text_only"), both: avg("both") };
+  }
+
+  function renderWinStats(payload) {
+    const responses = payload.responses;
+    const bestPick = computeBestPickPct(responses);
+    const successAvg = computeMethodAverages(responses, "Success");
+    const naturalnessAvg = computeMethodAverages(responses, "Naturalness");
+    const methods = ["audio_only", "text_only", "both"];
+
+    const bestPickHtml = `
+      <div class="win-stat">
+        <p class="win-stat-label">Best pick (ranked #1)</p>
+        <div class="win-stat-bar">
+          ${methods.map((m) => `<span class="win-stat-seg ${METHOD_SEG_CLASS[m]}" style="width:${bestPick[m]}%"></span>`).join("")}
+        </div>
+        <p class="win-stat-legend">
+          ${methods.map((m) => `<span><i class="win-dot ${METHOD_DOT_CLASS[m]}"></i>${METHOD_LABEL[m]} ${bestPick[m]}%</span>`).join("")}
+        </p>
+      </div>
+    `;
+
+    const ratingRows = (label, avgByMethod) => `
+      <div class="win-stat">
+        <p class="win-stat-label">${label}</p>
+        <div class="win-rating-rows">
+          ${methods
+            .map((m) => {
+              const v = avgByMethod[m];
+              return `
+                <div class="win-rating-row">
+                  <span class="win-rating-name"><i class="win-dot ${METHOD_DOT_CLASS[m]}"></i>${METHOD_LABEL[m]}</span>
+                  <div class="win-rating-bar"><span class="win-rating-fill ${METHOD_SEG_CLASS[m]}" style="width:${(v / 5) * 100}%"></span></div>
+                  <span class="win-rating-value">${v.toFixed(1)}</span>
+                </div>
+              `;
+            })
+            .join("")}
+        </div>
+      </div>
+    `;
+
+    el.winStats.innerHTML =
+      bestPickHtml +
+      ratingRows("Average edit success (1–5)", successAvg) +
+      ratingRows("Average motion naturalness (1–5)", naturalnessAvg);
+  }
+
   function renderSummary() {
     const payload = buildExportPayload();
+    renderWinStats(payload);
     const rows = payload.responses
       .map(
         (r) => `<tr>
