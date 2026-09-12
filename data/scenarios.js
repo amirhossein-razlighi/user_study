@@ -55,13 +55,6 @@ const SCENARIOS = [
     highlights: ["jumps off"]
   },
   {
-    slug: "gen_glass_edge",
-    edit: "The glass falls off the table and shatters on the floor.",
-    scene: "a drinking glass at the edge of a kitchen table",
-    baselineClip: "clip1",
-    highlights: ["falls", "shatters"]
-  },
-  {
     slug: "gen_glass_table",
     edit: "The glass tips over and spills the water.",
     scene: "a full glass of water on a wooden kitchen table",
@@ -102,13 +95,6 @@ const SCENARIOS = [
     scene: "a goldfish in a fish tank",
     baselineClip: "clip1",
     highlights: ["jumps out"]
-  },
-  {
-    slug: "man_claps",
-    edit: "The man claps his hands.",
-    scene: "a man standing, facing the camera",
-    baselineClip: "clip1",
-    highlights: ["claps"]
   },
   {
     slug: "man_shouts",

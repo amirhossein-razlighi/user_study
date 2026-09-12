@@ -3,7 +3,7 @@
 A minimalistic, mobile-friendly A/B preference study, built as a static
 site (no server) for GitHub Pages.
 
-For each of 27 scenarios, a participant:
+For each of 25 scenarios, a participant:
 
 1. Reads the one-sentence edit request and watches the original input video.
 2. Watches **Option A** and **Option B** — a baseline edit and "ours",
@@ -26,7 +26,7 @@ On the done screen, "Show a summary of my answers" also reveals a win-rate
 breakdown — Ours vs. Baseline vs. Tie, as a percentage of all scenarios,
 for each of the three questions (`computeWinRate()` in `app.js`) — visible
 only after the participant taps to expand it, never during the study.
-At the end, all 27 answers are submitted to Supabase in one request (see
+At the end, all 25 answers are submitted to Supabase in one request (see
 [Database](#database-supabase)); a status indicator shows saving/saved/
 failed, with automatic + manual retry and a "download results as .zip"
 fallback if it still can't get through.
@@ -94,6 +94,17 @@ with, e.g.:
 ffmpeg -y -ss 0.6 -i assets/videos/<slug>/clip1.mp4 -frames:v 1 -vf scale=480:-1 -q:v 5 assets/posters/<slug>/clip1.jpg
 ```
 
+### Retiring a scenario
+
+Removing an entry from `data/scenarios.js` (bump the `?v=` on
+`data/scenarios.js` in `index.html`) is enough to stop new participants
+from seeing it — its `assets/videos/<slug>/` and `assets/posters/<slug>/`
+files are left on disk untouched, and **existing DB rows for it are never
+touched either**, since they're keyed by `scenario_slug` on each row, not
+by anything in this manifest. A retired scenario's past responses just
+stop being live-served; nothing about them changes. Currently retired
+this way: `gen_glass_edge`, `man_claps` (25 of the original 27 live).
+
 ## Database (Supabase)
 
 Responses are stored in the `gruvi-survey` Supabase project (project ref
@@ -106,7 +117,7 @@ sibling study followed this same pattern for its own
 `public.h3_ablation_survey_responses` table — the template to copy for any
 future study.
 
-**Shape:** one row per `(session_id, scenario)` — i.e. 27 rows per
+**Shape:** one row per `(session_id, scenario)` — i.e. 25 rows per
 completed participant, "tidy"/long format, rather than one row per session
 with everything crammed into a jsonb blob. This makes per-scenario and
 overall metrics (win rate, task-accomplishment rate, etc.) plain `GROUP BY`
@@ -129,7 +140,7 @@ from h3_main_experiment_accomplishment_by_method
 group by method;
 ```
 
-Key columns: `session_id` (groups one participant's 27 rows),
+Key columns: `session_id` (groups one participant's 25 rows),
 `scenario_order`, `scenario_slug`, `edit_prompt`, `a_source`/`b_source`
 (blinded `clip1`/`clip2`), `a_role`/`b_role` (`baseline`/`ours`, decoded
 from the blinded mapping), `accomplished_a`/`accomplished_b`, and the
@@ -147,7 +158,7 @@ rows during cleaning.
 **No participant IDs, but repeat submissions are still detectable.** The
 consent screen promises no personal information is collected, so there's
 no login/name/email to key on. Instead, `session_id` (a fresh id every time
-someone starts or restarts the study — groups one submission's 27 rows)
+someone starts or restarts the study — groups one submission's 25 rows)
 is paired with `device_id`: a random id generated once and kept in the
 browser's `localStorage` under its own key (`video_study_device_id_v1`,
 separate from the study-progress key, so it survives "Start over"). It
@@ -171,7 +182,7 @@ already used by the other tables in this project. Only the project's
 the Supabase SQL editor.
 
 **Submission flow** (`assets/js/app.js`, see `submitResponses()`): on the
-done screen, all 27 rows are POSTed in a single request. A status card
+done screen, all 25 rows are POSTed in a single request. A status card
 shows a spinner while in flight, a green check on success, or a red X after
 3 failed attempts (1.5s/3s backoff) — with a "Try again" button and a
 "Download results (.zip)" fallback the participant can send manually.
@@ -207,7 +218,7 @@ The welcome screen has a "Debug view" checkbox that, while checked:
 - reveals which option (A/B) is the baseline vs. "ours" for every
   scenario, as a small badge next to each "Option A"/"Option B" title
 - unlocks the "Next" button so you can click through every scenario
-  without picking A/B/tie first (handy for quickly eyeballing all 27)
+  without picking A/B/tie first (handy for quickly eyeballing all 25)
 - skips the automatic DB submission on the done screen — instead of
   saving right away like a normal run, it shows "You're in debug mode —
   still submit responses?" and waits for an explicit tap
